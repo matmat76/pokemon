@@ -22,7 +22,7 @@ async fn main() {
     let pokemon_sprites = load_pokemon_sprites()
         .expect("Erreur: Impossible de charger les sprites Pokémon");
 
-    let pokemon_textures: Vec<Texture2D> = pokemon_sprites
+    let _pokemon_textures: Vec<Texture2D> = pokemon_sprites
         .iter()
         .map(|s| s.sprite.to_macroquad_texture())
         .collect();
@@ -55,7 +55,7 @@ async fn main() {
     
     // État du combat (None = pas en combat)
     let mut combat_state: Option<CombatState> = None;
-    let mut in_battle = false;
+    let mut _in_battle = false;
 
     // ========== BOUCLE DE JEU PRINCIPALE ==========
     loop {
@@ -94,7 +94,7 @@ async fn main() {
                 }
                 
                 combat_state = None;
-                in_battle = false;
+                _in_battle = false;
             }
         } else {
             // On est sur la map, gérer le déplacement normal
@@ -145,7 +145,7 @@ async fn main() {
         if show_encounter_popup && !show_victory_popup && is_key_pressed(KeyCode::Enter) {
             println!("⚔️  Combat lancé contre Célèbi!");
             show_encounter_popup = false;
-            in_battle = true;
+            _in_battle = true;
             
             // Créer le Pokémon du joueur
             let pokemon_joueur = Box::new(Flamby::new("Flambino".to_string())) as Box<dyn Pokemon>;

@@ -1,5 +1,3 @@
-use rand::Rng;
-
 #[derive(Debug, Clone, Copy)]
 pub struct Potion {
     pub x: i32,
@@ -19,11 +17,8 @@ impl Potion {
     }
 
     pub fn random_position(id: u32) -> Self {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
-        
-        let x = rng.gen_range(50..1000);
-        let y = rng.gen_range(50..950);
+        let x = rand::random_range(50..1000);
+        let y = rand::random_range(50..950);
         
         Potion::new(x, y, id)
     }

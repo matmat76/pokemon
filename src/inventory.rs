@@ -26,7 +26,7 @@ impl Inventory {
     /// Retourne une copie du Pokémon actuellement sélectionné (pour le combat)
     /// Attention: On clone pas le trait object, on crée une nouvelle instance
     pub fn get_current_pokemon_for_combat(&self) -> Option<Box<dyn Pokemon>> {
-        if let Some(pokemon) = self.get_current_pokemon() {
+        if let Some(_pokemon) = self.get_current_pokemon() {
             // TODO: Implémenter le clonage des Pokémon ou créer une nouvelle instance
             // Pour l'instant, on retourne None
             None

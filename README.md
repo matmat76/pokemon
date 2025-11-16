@@ -5,12 +5,12 @@
 **Pokémon Lite** est un jeu Pokémon simplifié développé en **Rust** utilisant la bibliothèque graphique **macroquad**. Le jeu met en place un système de combat tour par tour avec un dresseur explorant une carte pour rencontrer et combattre Célèbi, le Pokémon légendaire.
 
 ### Fonctionnalités principales
-- ✅ Exploration d'une carte interactive
-- ✅ Génération asynchrone de potions (thread + mutex)
-- ✅ Système de combat tour par tour
-- ✅ Rencontres avec Pokémon ennemis
-- ✅ Inventaire de potions collectables
-- ✅ Animations du dresseur
+- Exploration d'une carte interactive
+- Génération asynchrone de potions (thread + mutex)
+- Système de combat tour par tour
+- Rencontres avec Pokémon ennemis
+- Inventaire de potions collectables
+- Animations du dresseur
 
 ---
 
@@ -181,47 +181,6 @@ pub struct CombatState {
 - Positionnement des Pokémon ennemis
 
 **Note** : Utilise des APIs dépréciées (`thread_rng`, `gen_range`) - voir section Warnings
-
----
-
-## ⚠️ Justification des Warnings
-
-### 1. **Deprecated functions in `potion.rs`**
-```
-warning: use of deprecated function `rand::thread_rng`
-Renamed to `rng`
-```
-**Raison** : Version legacy de la crate `rand` utilisée
-**Impact** : Aucun - Le code fonctionne correctement, c'est juste un avertissement de maintenance
-**Peut être corrigé** : Mise à jour future de la crate rand vers une version plus récente
-
-### 2. **Unused imports/variables**
-```
-warning: unused variable: `pokemon_textures`
-warning: unused variable: `pokemon`
-```
-**Raison** : Code préparé pour futures fonctionnalités (sprites Pokémon multiples, etc.)
-**Impact** : Aucun - Code optionnel, simplement commenté par les variables préfixées `_`
-**Stratégie** : Volontairement gardés car code de base pour extensions futures
-
-### 3. **Unused assignments** (`in_battle` variable)
-```
-warning: value assigned to `in_battle` is never read
-```
-**Raison** : Variable de suivi historique, remplacée par `Option<CombatState>`
-**Impact** : Peut être supprimée
-**Raison de la conservation** : Facilite debug/logging futur
-
-### 4. **Unnecessary mut**
-```
-warning: variable does not need to be mutable
-let mut pokemon_spawner
-```
-**Raison** : `pokemon_spawner` n'est jamais modifié après initialisation
-**Impact** : Très mineure
-**Peut être corrigé** : Supprimer le `mut`
-
-**Conclusion** : Tous les warnings sont **non-critiques** et n'impactent pas la fonctionnalité du jeu. Le code compile et s'exécute sans erreur.
 
 ---
 
