@@ -1,110 +1,99 @@
 use macroquad::prelude::*;
 
-mod pokemon;
-mod combat;
-mod dresseur;
-mod map;
-mod player;
-mod graphics;
-
-use map::{Map, TerrainType, TILE_SIZE};
-use player::Player;
-use graphics::{draw_tile, draw_player, draw_ui};
+use pokemon_lite::player::Player;
+use pokemon_lite::graphics::draw_ui;
+use pokemon_lite::pokedex::load_pokemon_sprites;
+use pokemon_lite::pokemon_renderer::PokemonRenderable;
+use pokemon_lite::pokemon::{Pokemon, Flamby};
+use pokemon_lite::trainer_animations::TrainerAnimations;
 
 #[macroquad::main("Pokemon Lite")]
 async fn main() {
-    // Configuration de la fenêtre (Macroquad gère automatiquement)
-    let map_largeur = 15;
-    let map_hauteur = 12;
+    let background_texture = load_texture("texture/Game Boy Advance - Pokemon Mystery Dungeon_ Red Rescue Team - Backgrounds - Pokemon Square.png")
+        .await
+        .expect("Erreur: Impossible de charger l'image de fond");
     
-    // Créer une map de 15x12 (en tiles)
-    let mut map = Map::new(map_largeur as usize, map_hauteur as usize);
+    let trainer_animations = TrainerAnimations::load()
+        .await
+        .expect("Erreur: Impossible de charger les animations du dresseur");
+    
+    let pokemon_sprites = load_pokemon_sprites()
+        .expect("Erreur: Impossible de charger les sprites Pokémon");
 
-    // Placer des hautes herbes (zones sauvages)
-    map.set_terrain(5, 3, TerrainType::HauteHerbe);
-    map.set_terrain(6, 3, TerrainType::HauteHerbe);
-    map.set_terrain(5, 4, TerrainType::HauteHerbe);
-    map.set_terrain(6, 4, TerrainType::HauteHerbe);
-
-    // Placer des bâtiments
-    map.set_terrain(1, 1, TerrainType::Pharmacie);
-    map.set_terrain(12, 10, TerrainType::Batiment1);
-    map.set_terrain(13, 10, TerrainType::Batiment2);
-
-    // Placer de l'eau
-    for x in 2..5 {
-        map.set_terrain(x, 7, TerrainType::Eau);
-        map.set_terrain(x, 8, TerrainType::Eau);
-    }
-
-    // Placer un chemin
-    for x in 0..15 {
-        map.set_terrain(x, 0, TerrainType::Chemin);
-    }
-
-    // Créer le joueur au démarrage (position 0,0 en pixels = tile (0,0))
-    let mut joueur = Player::new("Sacha".to_string(), 0, 56); // Commence à (0, 1) tile
+    let pokemon_textures: Vec<Texture2D> = pokemon_sprites
+        .iter()
+        .map(|s| s.sprite.to_macroquad_texture())
+        .collect();
+    let flamby = Box::new(Flamby::new("Flambino".to_string())) as Box<dyn Pokemon>;
+    
+    // Créer le PokemonRenderable en associant:
+    // - Le Pokémon logique (Flamby avec stats)
+    // - La texture graphique (Celebi - index 3)
+    // - La position sur la map (x=400, y=300) en pixels
+    let pokemon_renderable = PokemonRenderable::new(
+        flamby,
+        pokemon_textures[3].clone(), // Afficher Celebi (index 3)
+        400.0,               // x position
+        330.0,               // y position
+    );
+    
+    // Créer le joueur au démarrage au milieu-gauche de la map
+    // Position: x=200 pixels, y=400 pixels
+    let mut joueur = Player::new("Sacha".to_string(), 200, 320);
 
     // ========== BOUCLE DE JEU PRINCIPALE ==========
     loop {
         // === ÉTAPE 1 : RÉCUPÉRER LES INPUTS ===
-        if is_key_pressed(KeyCode::P) {
+        if is_key_pressed(KeyCode::E) {
             break; // Quitter
         }
 
-        // Déplacement haut
-        if is_key_pressed(KeyCode::Z) {
-            let (tile_x, tile_y) = joueur.get_tile_position();
-            let nouvelle_pos = (tile_x * TILE_SIZE, (tile_y - 1) * TILE_SIZE);
-            if map.peut_se_deplacer(nouvelle_pos.0, nouvelle_pos.1) {
-                joueur.move_up();
-            }
+        // Déplacement haut (Flèche haut)
+        if is_key_down(KeyCode::Up) && joueur.can_move() {
+            joueur.move_up();
         }
 
-        // Déplacement bas
-        if is_key_pressed(KeyCode::S) {
-            let (tile_x, tile_y) = joueur.get_tile_position();
-            let nouvelle_pos = (tile_x * TILE_SIZE, (tile_y + 1) * TILE_SIZE);
-            if map.peut_se_deplacer(nouvelle_pos.0, nouvelle_pos.1) {
-                joueur.move_down(map.hauteur_pixels());
-            }
+        // Déplacement bas (Flèche bas)
+        if is_key_down(KeyCode::Down) && joueur.can_move() {
+            joueur.move_down(1007); // Limite de l'image
         }
 
-        // Déplacement gauche
-        if is_key_pressed(KeyCode::Q) {
-            let (tile_x, tile_y) = joueur.get_tile_position();
-            let nouvelle_pos = ((tile_x - 1) * TILE_SIZE, tile_y * TILE_SIZE);
-            if map.peut_se_deplacer(nouvelle_pos.0, nouvelle_pos.1) {
-                joueur.move_left();
-            }
+        // Déplacement gauche (Flèche gauche)
+        if is_key_down(KeyCode::Left) && joueur.can_move() {
+            joueur.move_left();
         }
 
-        // Déplacement droite
-        if is_key_pressed(KeyCode::D) {
-            let (tile_x, tile_y) = joueur.get_tile_position();
-            let nouvelle_pos = ((tile_x + 1) * TILE_SIZE, tile_y * TILE_SIZE);
-            if map.peut_se_deplacer(nouvelle_pos.0, nouvelle_pos.1) {
-                joueur.move_right(map.largeur_pixels());
-            }
+        // Déplacement droite (Flèche droite)
+        if is_key_down(KeyCode::Right) && joueur.can_move() {
+            joueur.move_right(1064); // Limite de l'image
         }
 
         // === ÉTAPE 2 : METTRE À JOUR ===
-        // (Rien à mettre à jour pour l'instant)
+        // Mettre à jour l'animation du dresseur
+        let delta_time = get_frame_time();
+        joueur.update_animation(delta_time);
+        joueur.update_movement_cooldown(delta_time);
 
         // === ÉTAPE 3 : DESSINER ===
-        clear_background(Color::new(0.1, 0.1, 0.1, 1.0)); // Fond noir
+        clear_background(BLACK);
 
-        // Dessiner la map
-        for y in 0..map.hauteur() {
-            for x in 0..map.largeur() {
-                if let Some(tile) = map.get_tile(x, y) {
-                    draw_tile(x as i32, y as i32, tile.terrain);
-                }
-            }
+        // Afficher l'image de fond
+        // texture, position x, position y, couleur (WHITE = pas de tint)
+        draw_texture(&background_texture, 0.0, 0.0, WHITE);
+
+        // Afficher le dresseur avec la frame d'animation actuelle
+        let frame_name = joueur.get_frame_name();
+        if let Some(texture) = trainer_animations.get_frame(&frame_name) {
+            let params = DrawTextureParams {
+                dest_size: Some(Vec2::new(16.0, 16.0)),
+                ..Default::default()
+            };
+            draw_texture_ex(texture, joueur.x as f32, joueur.y as f32, WHITE, params);
         }
 
-        // Dessiner le joueur
-        draw_player(joueur.x, joueur.y);
+        // Afficher le Pokémon renderable!
+        // C'est ici qu'on utilise la méthode afficher() qu'on a codée
+        pokemon_renderable.afficher();
 
         // Dessiner l'UI
         let (tile_x, tile_y) = joueur.get_tile_position();

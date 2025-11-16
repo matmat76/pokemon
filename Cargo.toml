@@ -2,7 +2,9 @@
 name = "pokemon_lite"
 version = "0.1.0"
 edition = "2024"
+default-run = "pokemon_lite"
 
 [dependencies]
 rand = "0.9.0"
 macroquad = "0.4"
+image = "0.25"
