@@ -73,7 +73,7 @@ impl Player {
     // Source : Copilot
     // Réinitialiser le cooldown après un mouvement
     fn reset_movement_cooldown(&mut self) {
-        self.movement_cooldown = 0.05; // 50ms entre chaque mouvement (très rapide)
+        self.movement_cooldown = 0.01; // 50ms entre chaque mouvement (très rapide)
     }
     
     // Obtenir le nom de la frame actuelle
