@@ -3,10 +3,12 @@ use macroquad::prelude::*;
 use pokemon_lite::player::Player;
 use pokemon_lite::graphics::draw_ui;
 use pokemon_lite::pokedex::load_pokemon_sprites;
-use pokemon_lite::pokemon::{Pokemon, Flamby};
+use pokemon_lite::pokemon::{Pokemon, Flamby, Aquali};
 use pokemon_lite::trainer_animations::TrainerAnimations;
 use pokemon_lite::potion_manager::PotionManager;
 use pokemon_lite::pokemon_spawner::PokemonSpawner;
+use pokemon_lite::combat::{CombatState, dessiner_interface_combat, traiter_input_combat};
+use pokemon_lite::inventory::Inventory;
 
 #[macroquad::main("Pokemon Lite")]
 async fn main() {
@@ -45,7 +47,16 @@ async fn main() {
 
     // État du combat / pop-up
     let mut show_encounter_popup = false;
-    let mut encounter_pokemon_id: Option<u32> = None;
+    let mut _encounter_pokemon_id: Option<u32> = None;
+
+    // Inventaire du dresseur
+    let mut inventory = Inventory::new();
+    inventory.add_pokemon(Box::new(Flamby::new("Flambino".to_string())));
+    inventory.add_pokemon(Box::new(Aquali::new("Aquali".to_string())));
+    
+    // État du combat (None = pas en combat)
+    let mut combat_state: Option<CombatState> = None;
+    let mut in_battle = false;
 
     // ========== BOUCLE DE JEU PRINCIPALE ==========
     loop {
@@ -54,24 +65,48 @@ async fn main() {
             break; // Quitter
         }
 
-        // Déplacement haut (Flèche haut)
-        if is_key_down(KeyCode::Up) && joueur.can_move() {
-            joueur.move_up();
-        }
+        // Si on est en combat
+        if let Some(ref mut combat) = combat_state {
+            // Gérer les inputs du combat
+            traiter_input_combat(combat);
+            
+            // Attendre un peu entre les tours
+            if combat.combat_timer < 2.0 {
+                combat.combat_timer += get_frame_time();
+            } else if !combat.tour_joueur && combat.combat_timer >= 2.0 {
+                // Le sauvage attaque
+                combat.sauvage_attaque();
+                combat.combat_timer = 0.0;
+            }
+            
+            // Vérifier si le combat est terminé
+            if combat.est_termine() {
+                println!("Combat terminé: {}", combat.get_resultat());
+                combat_state = None;
+                in_battle = false;
+                show_encounter_popup = false;
+            }
+        } else {
+            // On est sur la map, gérer le déplacement normal
+            // Déplacement haut (Flèche haut)
+            if is_key_down(KeyCode::Up) && joueur.can_move() {
+                joueur.move_up();
+            }
 
-        // Déplacement bas (Flèche bas)
-        if is_key_down(KeyCode::Down) && joueur.can_move() {
-            joueur.move_down(1007); // Limite de l'image
-        }
+            // Déplacement bas (Flèche bas)
+            if is_key_down(KeyCode::Down) && joueur.can_move() {
+                joueur.move_down(1007); // Limite de l'image
+            }
 
-        // Déplacement gauche (Flèche gauche)
-        if is_key_down(KeyCode::Left) && joueur.can_move() {
-            joueur.move_left();
-        }
+            // Déplacement gauche (Flèche gauche)
+            if is_key_down(KeyCode::Left) && joueur.can_move() {
+                joueur.move_left();
+            }
 
-        // Déplacement droite (Flèche droite)
-        if is_key_down(KeyCode::Right) && joueur.can_move() {
-            joueur.move_right(1064); // Limite de l'image
+            // Déplacement droite (Flèche droite)
+            if is_key_down(KeyCode::Right) && joueur.can_move() {
+                joueur.move_right(1064); // Limite de l'image
+            }
         }
 
         // === ÉTAPE 2 : METTRE À JOUR ===
@@ -100,7 +135,7 @@ async fn main() {
         let dy_celebi = (celebi_y - joueur.y).abs();
         if dx_celebi < 25 && dy_celebi < 25 && !show_encounter_popup {
             show_encounter_popup = true;
-            encounter_pokemon_id = Some(999); // ID spécial pour Célèbi
+            _encounter_pokemon_id = Some(999); // ID spécial pour Célèbi
             println!("✨ Célèbi détecté! Appuyez sur Entrée pour combattre!");
         }
 
@@ -108,7 +143,16 @@ async fn main() {
         if show_encounter_popup && is_key_pressed(KeyCode::Enter) {
             println!("⚔️  Combat lancé contre Célèbi!");
             show_encounter_popup = false;
-            // TODO: Lancer le combat avec Célèbi
+            in_battle = true;
+            
+            // Créer le Pokémon du joueur
+            let pokemon_joueur = Box::new(Flamby::new("Flambino".to_string())) as Box<dyn Pokemon>;
+            
+            // Créer le Pokémon ennemi (Célèbi)
+            let pokemon_celebi = Box::new(Flamby::new("Celebi".to_string())) as Box<dyn Pokemon>;
+            
+            // Initialiser le CombatState
+            combat_state = Some(CombatState::new(pokemon_joueur, pokemon_celebi));
         }
 
         // Si on appuie sur Échap, fermer la pop-up
@@ -119,9 +163,13 @@ async fn main() {
         // === ÉTAPE 3 : DESSINER ===
         clear_background(BLACK);
 
-        // Afficher l'image de fond
-        // texture, position x, position y, couleur (WHITE = pas de tint)
-        draw_texture(&background_texture, 0.0, 0.0, WHITE);
+        // Si on est en combat, afficher l'interface de combat
+        if let Some(ref combat) = combat_state {
+            dessiner_interface_combat(combat);
+        } else {
+            // Sinon, afficher la map
+            // Afficher l'image de fond
+            draw_texture(&background_texture, 0.0, 0.0, WHITE);
 
         // Afficher les potions sur la map
         let potions = potion_manager.get_potions();
@@ -195,6 +243,7 @@ async fn main() {
             draw_text("Appuyez sur ENTRÉE pour combattre", popup_x + 30.0, popup_y + 90.0, 16.0, WHITE);
             draw_text("ou ÉCHAP pour ignorer", popup_x + 60.0, popup_y + 130.0, 16.0, WHITE);
         }
+        } // Fermer le else de "si on est en combat"
 
         // === ÉTAPE 4 : AFFICHER ET SYNC FPS ===
         next_frame().await;

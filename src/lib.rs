@@ -11,3 +11,4 @@ pub mod pokedex;
 pub mod potion;
 pub mod potion_manager;
 pub mod pokemon_spawner;
+pub mod inventory;
