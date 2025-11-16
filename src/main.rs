@@ -48,6 +48,8 @@ async fn main() {
     // État du combat / pop-up
     let mut show_encounter_popup = false;
     let mut _encounter_pokemon_id: Option<u32> = None;
+    let mut show_victory_popup = false;
+    let mut victory_message = String::new();
 
     // Inventaire du dresseur
     let mut inventory = Inventory::new();
@@ -82,6 +84,8 @@ async fn main() {
             // Vérifier si le combat est terminé
             if combat.est_termine() {
                 println!("Combat terminé: {}", combat.get_resultat());
+                show_victory_popup = true;
+                victory_message = "🎉 Victoire !\nVous avez vaincu Célèbi !\nAppuyez sur Entrée pour quitter.".to_string();
                 combat_state = None;
                 in_battle = false;
                 show_encounter_popup = false;
@@ -242,6 +246,32 @@ async fn main() {
             draw_text("✨ Rencontre avec Célèbi!", popup_x + 50.0, popup_y + 40.0, 20.0, WHITE);
             draw_text("Appuyez sur ENTRÉE pour combattre", popup_x + 30.0, popup_y + 90.0, 16.0, WHITE);
             draw_text("ou ÉCHAP pour ignorer", popup_x + 60.0, popup_y + 130.0, 16.0, WHITE);
+        }
+
+        // Afficher la pop-up de victoire
+        if show_victory_popup {
+            let popup_x = screen_width() / 2.0 - 200.0;
+            let popup_y = screen_height() / 2.0 - 100.0;
+            let popup_width = 400.0;
+            let popup_height = 200.0;
+
+            // Fond semi-transparent noir
+            draw_rectangle(0.0, 0.0, screen_width(), screen_height(), Color::new(0.0, 0.0, 0.0, 0.5));
+
+            // Fenêtre pop-up
+            draw_rectangle(popup_x, popup_y, popup_width, popup_height, Color::new(0.2, 1.0, 0.2, 1.0));
+            draw_rectangle_lines(popup_x, popup_y, popup_width, popup_height, 3.0, YELLOW);
+
+            // Texte
+            let lines: Vec<&str> = victory_message.lines().collect();
+            for (i, line) in lines.iter().enumerate() {
+                draw_text(line, popup_x + 50.0, popup_y + 50.0 + (i as f32 * 30.0), 20.0, WHITE);
+            }
+        }
+
+        // Gérer la fermeture du jeu depuis la pop-up de victoire
+        if show_victory_popup && is_key_pressed(KeyCode::Enter) {
+            std::process::exit(0);
         }
         } // Fermer le else de "si on est en combat"
 
