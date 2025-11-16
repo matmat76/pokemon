@@ -148,7 +148,7 @@ pub struct CombatState {
 - `get_frame()` - Retourne la texture correspondant à l'animation actuelle
 - Support de 4 directions × 4 frames chacune
 
-### 10. **sprite_loader.rs** - Chargement et traitement des images
+### 10. **sprite_loader.rs** - Chargement et traitement des images : fait par l'IA
 **Responsabilité** : Utilitaires pour charger et manipuler les sprites PNG
 
 **Fonctionnalités** :
@@ -161,7 +161,7 @@ pub struct CombatState {
 **Dépendances** :
 - `image` crate pour le traitement bas niveau des pixels
 
-### 11. **graphics.rs** - Fonctions utilitaires graphiques
+### 11. **graphics.rs** - Fonctions utilitaires graphiques : fait par l'IA
 **Responsabilité** : Rendu UI (texte, boîtes, inventaire)
 
 **Fonctionnalités** :
@@ -230,7 +230,8 @@ pub struct CombatState {
 - **Échap** : Annuler une pop-up de rencontre
 - **1/2/3/4** : Actions en combat (attaque, pokéball, potion, fuite)
 - **E** : Quitter le jeu
-
+Le pokémon légendaire Célébi est affiché en cercle bleu et les potions en cercles rouge sur la map.
+Le combat se fait en tour par tour avec un sleep de 2s entre chaque action. Un chronomètre tourne, donc si aucune action n'est faite au cours des 2s, l'action est considérée comme null.
 
 
 ## 🏗️ Architecture
