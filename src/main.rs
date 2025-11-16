@@ -6,7 +6,6 @@ use pokemon_lite::pokedex::load_pokemon_sprites;
 use pokemon_lite::pokemon::{Pokemon, Flamby, Aquali};
 use pokemon_lite::trainer_animations::TrainerAnimations;
 use pokemon_lite::potion_manager::PotionManager;
-use pokemon_lite::pokemon_spawner::PokemonSpawner;
 use pokemon_lite::combat::{CombatState, dessiner_interface_combat, traiter_input_combat};
 use pokemon_lite::inventory::Inventory;
 
@@ -37,9 +36,6 @@ async fn main() {
     
     // Inventaire du joueur (nombre de potions)
     let mut inventaire_potions = 0;
-
-    // Créer le spawner de Pokémon sur la map
-    let mut pokemon_spawner = PokemonSpawner::new();
 
     // Position du Célèbi sur la map (centre)
     let celebi_x = 400;
@@ -128,14 +124,6 @@ async fn main() {
             println!("🎒 Inventaire: {} potion(s)", inventaire_potions);
         }
 
-        // Vérifier les collisions avec les Pokémon ennemis
-        let collisions = pokemon_spawner.check_collisions(joueur.x, joueur.y);
-        if !collisions.is_empty() {
-            println!("⚔️  Combat engagé! Pokémon trouvé!");
-            // TODO: Lancer le combat avec le premier Pokémon en collision
-            // Pour l'instant, on affiche juste le message
-        }
-
         // Vérifier la collision avec Célèbi
         let dx_celebi = (celebi_x - joueur.x).abs();
         let dy_celebi = (celebi_y - joueur.y).abs();
@@ -184,22 +172,6 @@ async fn main() {
             draw_circle(potion.x as f32, potion.y as f32, 8.0, Color::new(1.0, 0.0, 0.0, 0.9));
             // Ajouter une petite décoration (anneau jaune)
             draw_circle_lines(potion.x as f32, potion.y as f32, 12.0, 2.0, Color::new(1.0, 1.0, 0.0, 0.7));
-        }
-
-        // Afficher les Pokémon ennemis sur la map
-        for encounter in &pokemon_spawner.encounters {
-            // Dessiner un cercle bleu 🎮 pour chaque Pokémon ennemi
-            draw_circle(encounter.x as f32, encounter.y as f32, 10.0, Color::new(0.0, 0.5, 1.0, 0.9));
-            // Ajouter une petite décoration (anneau rouge)
-            draw_circle_lines(encounter.x as f32, encounter.y as f32, 15.0, 2.0, Color::new(1.0, 0.0, 0.0, 0.7));
-            // Afficher le nom du Pokémon
-            draw_text(
-                encounter.pokemon.get_nom(),
-                encounter.x as f32 - 30.0,
-                encounter.y as f32 - 20.0,
-                14.0,
-                WHITE,
-            );
         }
 
         // Afficher le Célèbi au centre (détectable par collision)
