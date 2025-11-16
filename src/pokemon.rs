@@ -79,7 +79,7 @@ impl Pokemon for Flamby {
     }
 
     fn get_pv_max(&self) -> i32 {
-        60  // PV max de Flamby
+        50  // PV max = PV initiaux
     }
 }
 
@@ -111,7 +111,7 @@ impl Pokemon for Aquali {
     }
 
     fn get_pv_max(&self) -> i32 {
-        65  // PV max de Aquali
+        70  // PV max = PV initiaux
     }
 }
 
@@ -143,7 +143,7 @@ impl Pokemon for Florizarre {
     }
 
     fn get_pv_max(&self) -> i32 {
-        70  // PV max de Florizarre
+        70  // PV max = PV initiaux
     }
 }
 

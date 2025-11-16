@@ -83,8 +83,16 @@ async fn main() {
                 println!("Combat terminé: {}", combat.get_resultat());
                 show_victory_popup = true;
                 show_encounter_popup = false;  // Fermer la pop-up d'encounter
-                celebi_defeated = true;  // Marquer Célèbi comme vaincu
-                victory_message = "🎉 Victoire !\nVous avez vaincu Célèbi !\nAppuyez sur Entrée pour quitter.".to_string();
+                
+                // Déterminer le vainqueur
+                let resultat = combat.get_resultat();
+                if resultat.contains("Victoire") {
+                    celebi_defeated = true;  // Marquer Célèbi comme vaincu
+                    victory_message = "🎉 Victoire !\nVous avez vaincu Célèbi !\nAppuyez sur Entrée pour quitter.".to_string();
+                } else {
+                    victory_message = "💀 Défaite !\nVotre Pokémon a été vaincu!\nAppuyez sur Entrée pour quitter.".to_string();
+                }
+                
                 combat_state = None;
                 in_battle = false;
             }
