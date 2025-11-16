@@ -157,22 +157,22 @@ pub fn dessiner_interface_combat(combat: &CombatState) {
 
     // Bouton 1: Attaquer
     let btn1_x = x + 20.0;
-    dessiner_bouton(btn1_x, boutons_y, bouton_width, bouton_height, "Attaquer (A)", 
+    dessiner_bouton(btn1_x, boutons_y, bouton_width, bouton_height, "Attaquer (1)", 
                     combat.action_selectionnee == ActionCombat::Attaquer);
 
     // Bouton 2: Pokéball
     let btn2_x = btn1_x + bouton_width + spacing;
-    dessiner_bouton(btn2_x, boutons_y, bouton_width, bouton_height, "Pokéball (B)", 
+    dessiner_bouton(btn2_x, boutons_y, bouton_width, bouton_height, "Pokéball (2)", 
                     combat.action_selectionnee == ActionCombat::Pokeball);
 
     // Bouton 3: Potion
     let btn3_x = btn2_x + bouton_width + spacing;
-    dessiner_bouton(btn3_x, boutons_y, bouton_width, bouton_height, "Potion (C)", 
+    dessiner_bouton(btn3_x, boutons_y, bouton_width, bouton_height, "Potion (3)", 
                     combat.action_selectionnee == ActionCombat::Potion);
 
     // Bouton 4: Fuir
     let btn4_x = btn3_x + bouton_width + spacing;
-    dessiner_bouton(btn4_x, boutons_y, bouton_width, bouton_height, "Fuir (D)", 
+    dessiner_bouton(btn4_x, boutons_y, bouton_width, bouton_height, "Fuir (4)", 
                     combat.action_selectionnee == ActionCombat::Fuir);
 }
 
@@ -191,20 +191,25 @@ pub fn traiter_input_combat(combat: &mut CombatState) {
         return; // C'est au tour du sauvage
     }
     
-    if is_key_pressed(KeyCode::A) {
+    // Touches numériques pour les actions (alternative à ABCD)
+    if is_key_pressed(KeyCode::Key1) || is_key_pressed(KeyCode::A) {
+        println!("Action: Attaque!");
         combat.action_selectionnee = ActionCombat::Attaquer;
         combat.joueur_attaque();
-    } else if is_key_pressed(KeyCode::B) {
+    } else if is_key_pressed(KeyCode::Key2) || is_key_pressed(KeyCode::B) {
+        println!("Action: Pokéball!");
         combat.action_selectionnee = ActionCombat::Pokeball;
         combat.message_combat = "Vous avez lancé une Pokéball!".to_string();
         combat.combat_timer = 0.0;
         combat.tour_joueur = false;
-    } else if is_key_pressed(KeyCode::C) {
+    } else if is_key_pressed(KeyCode::Key3) || is_key_pressed(KeyCode::C) {
+        println!("Action: Potion!");
         combat.action_selectionnee = ActionCombat::Potion;
         combat.message_combat = "Vous avez utilisé une Potion!".to_string();
         combat.combat_timer = 0.0;
         combat.tour_joueur = false;
-    } else if is_key_pressed(KeyCode::D) {
+    } else if is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::D) {
+        println!("Action: Fuir!");
         combat.action_selectionnee = ActionCombat::Fuir;
         combat.message_combat = "Vous tentez de fuir...".to_string();
         combat.en_combat = false;
