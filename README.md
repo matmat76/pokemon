@@ -1,8 +1,12 @@
 # Pokémon Lite - Jeu Pokémon en Rust
 
+##  Auteur
+
+Développé par Matthieu comme projet d'évaluation ESEO (Cycles Ingénieur, Module Rust)
+
 ## 📋 Vue d'ensemble
 
-**Pokémon Lite** est un jeu Pokémon simplifié développé en **Rust** utilisant la bibliothèque graphique **macroquad**. Le jeu met en place un système de combat tour par tour avec un dresseur explorant une carte pour rencontrer et combattre Célèbi, le Pokémon légendaire.
+**Pokémon Lite** est un jeu Pokémon simplifié développé en **Rust** utilisant la bibliothèque graphique **macroquad** et **image**. Le jeu met en place un système de combat tour par tour avec un dresseur explorant une carte pour rencontrer et combattre Célèbi, le Pokémon légendaire.
 
 ### Fonctionnalités principales
 - Exploration d'une carte interactive
@@ -14,7 +18,7 @@
 
 ---
 
-## �️ Architecture et Modules
+## Architecture et Modules
 
 ### 1. **main.rs** - Boucle de jeu principale
 **Responsabilité** : Orchestration générale du jeu, gestion d'état et boucle graphique
@@ -23,8 +27,8 @@
 - Initialisation du contexte macroquad
 - Boucle de jeu (input → update → render)
 - Gestion de la machine d'état (exploration ↔ combat)
-- Gestion des collisions (joueur-potions, joueur-Pokémon, joueur-Célèbi)
-- Affichage des pop-ups (rencontre, victoire)
+- Gestion des collisions (joueur-potions, joueur-Pokémon, joueur-Célèbi) : réalisé par l'IA
+- Affichage des pop-ups (rencontre, victoire) : réalisé par l'IA 
 - Chargement des textures et ressources
 
 **Dépendances** : 
@@ -144,108 +148,81 @@ pub struct CombatState {
 - `get_frame()` - Retourne la texture correspondant à l'animation actuelle
 - Support de 4 directions × 4 frames chacune
 
-### 10. **graphics.rs** - Fonctions utilitaires graphiques
+### 10. **sprite_loader.rs** - Chargement et traitement des images
+**Responsabilité** : Utilitaires pour charger et manipuler les sprites PNG
+
+**Fonctionnalités** :
+- `load_image_file()` - Charge une image PNG et la convertit en RgbaImage
+- `crop_sprite()` - Extrait une région rectangulaire d'une image
+- `remove_blue_background()` - Rend transparent le fond bleu Pokémon classique
+- `rgba_to_macroquad_texture()` - Convertit une RgbaImage en texture Macroquad
+- Structure `Sprite` - Wrapper pour stocker et manipuler les sprites
+
+**Dépendances** :
+- `image` crate pour le traitement bas niveau des pixels
+
+### 11. **graphics.rs** - Fonctions utilitaires graphiques
 **Responsabilité** : Rendu UI (texte, boîtes, inventaire)
 
 **Fonctionnalités** :
 - `draw_ui()` - Affiche info joueur (nom, position, tile)
 - Rendu du HUD de jeu
 
-### 11. **dresseur.rs** - Données du dresseur
+### 12. **dresseur.rs** - Données du dresseur
 **Responsabilité** : Définition du personnage joueur
 
 **Données** :
 - Nom, position (x, y)
 - État animation
 
-### 12. **lib.rs** - Déclaration des modules
+### 13. **lib.rs** - Déclaration des modules
 
 ---
 
 ## 🔧 Bibliothèques externes
 
-### macroquad (0.4.14)
+### 1. ****[Macroquad](https://docs.rs/macroquad/latest/macroquad/)**** (v0.4.14)
 **Utilisation** : Framework graphique 2D complet
+
+**Fonctionnalités utilisées** :
 - Gestion de la fenêtre et boucle de jeu
 - Rendu de textures et formes (cercles, rectangles)
 - Système d'input (clavier)
 - Chargement d'images PNG
-
-**Caractéristiques avancées utilisées** :
-- `DrawTextureParams` - Rendu personnalisé des textures (mise à l'échelle)
 - Gestion de la transparence et couleurs (RGBA)
 
-### rand
+**Caractéristiques avancées** :
+- `DrawTextureParams` - Rendu personnalisé des textures (mise à l'échelle)
+- `screen_width()` / `screen_height()` - Détection dynamique de la résolution
+- `get_frame_time()` - Delta time pour animations fluides
+
+**Utilisé dans** : `main.rs`, `combat.rs`, `graphics.rs`
+
+### 2. ****[Image](https://docs.rs/image/latest/image/)**** (v0.25)
+**Utilisation** : Traitement et manipulation d'images PNG
+
+**Fonctionnalités utilisées** :
+- `ImageReader::open()` - Chargement de fichiers PNG
+- `DynamicImage::to_rgba8()` - Conversion en format RGBA (4 canaux: R, G, B, Alpha)
+- Manipulation directe des pixels (accès R, G, B, A)
+- Détection et suppression des fonds colorés (bleu Pokémon classique)
+- Extraction de régions d'image (crop de spritesheets)
+
+**Utilisé dans** : `sprite_loader.rs`
+
+### 3. ****[Rand](https://docs.rs/rand/latest/rand/)**** (v0.9)
 **Utilisation** : Génération de nombres aléatoires
-- Positions aléatoires des potions
+
+**Fonctionnalités utilisées** :
+- `rand::random_range()` - Génération d'entiers aléatoires dans une plage
+- Positions aléatoires des potions (50-1000 en X, 50-950 en Y)
 - Positionnement des Pokémon ennemis
+- Dégâts aléatoires en combat (entre min et max)
 
-**Note** : Utilise des APIs dépréciées (`thread_rng`, `gen_range`) - voir section Warnings
+**Note** : Initialement utilisait des APIs dépréciées (`thread_rng()`, `gen_range()`), maintenant corrigé avec `random_range()` moderne
 
----
+**Utilisé dans** : `potion.rs`, `pokemon.rs`
 
-## 🎯 Concepts Rust avancés utilisés
-
-### 1. **Arc<Mutex<T>>** pour concurrence thread-safe
-- Permet au thread de génération de potions et au thread principal de partager la même collection
-- Arc = Atomic Reference Counting (partage de propriété)
-- Mutex = Exclusion mutuelle (un seul accès à la fois)
-
-### 2. **Trait Objects** (`Box<dyn Pokemon>`)
-- Polymorphisme dynamique pour différents types de Pokémon
-- Permet stockage hétérogène (Flamby et Aquali dans le même vecteur)
-
-### 3. **Pattern matching** et **Options**
-- `if let Some(ref mut combat) = combat_state` - Gestion d'état optionnel
-- `Option<CombatState>` - Machine d'état exploration/combat
-
-### 4. **Lifetimes implicites**
-- Les références utilisées respectent les durées de vie Rust
-- Pas de `'a`, `'b` explicites grâce à l'élision
-
-### 5. **Closure et capture**
-- Thread de génération capture `Arc<Mutex<Vec<Potion>>>` via `move`
-
----
-
-## 📊 Répartition du travail
-
-### Phase 1 : Architecture et modules de base
-- ✅ Création de `player.rs` - Mouvement et animation du joueur
-- ✅ Création de `pokemon.rs` - Trait Pokémon et implémentations
-- ✅ Création de `dresseur.rs` - Données du personnage
-- ✅ Création de `graphics.rs` - Utilitaires de rendu
-
-### Phase 2 : Système de potion (threads + mutex)
-- ✅ Création de `potion.rs` - Structure Potion
-- ✅ Création de `potion_manager.rs` - **Thread de génération + Mutex**
-- ✅ Intégration dans `main.rs` - Rendu et collisions
-
-### Phase 3 : Combat et rencontres
-- ✅ Création de `combat.rs` - Système de combat complet
-- ✅ Intégration de Célèbi avec détection de collision
-- ✅ Machine d'état exploration ↔ combat
-
-### Phase 4 : Finalisation
-- ✅ Création de `inventory.rs` - Inventaire du joueur
-- ✅ Création de `trainer_animations.rs` - Animations du dresseur
-- ✅ Pop-up de victoire quand Célèbi est vaincu
-- ✅ Arrêt du jeu après victoire
-
----
-
-## 🚀 Comment compiler et exécuter
-
-```bash
-# Compiler le projet
-cargo build
-
-# Exécuter le jeu
-cargo run
-
-# Compiler en mode release (optimisé)
-cargo build --release
-```
 
 ### Contrôles du jeu
 - **Flèches** : Se déplacer
@@ -254,55 +231,7 @@ cargo build --release
 - **1/2/3/4** : Actions en combat (attaque, pokéball, potion, fuite)
 - **E** : Quitter le jeu
 
----
 
-## 📋 Validation du CDC (Cahier des Charges)
-
-| Critère | Statut | Détail |
-|---------|--------|--------|
-| **Threads** | ✅ Satisfait | 1 thread de génération de potions dans `potion_manager.rs` |
-| **Mutex** | ✅ Satisfait | Arc<Mutex<Vec<Potion>>> pour synchronisation thread-safe |
-| **Concurrence** | ✅ Satisfait | Thread génère potions toutes les 2s en parallèle du gameplay |
-| **Modularité** | ✅ Satisfait | 12 modules séparés avec responsabilités claires |
-| **Gameplay** | ✅ Satisfait | Exploration, rencontres, combat contre Célèbi |
-| **Victoire** | ✅ Satisfait | Pop-up de victoire + arrêt du jeu après défaite de Célèbi |
-
----
-
-## 🔮 Améliorations futures possibles
-
-- [ ] Multiples rencontres Pokémon sur la carte
-- [ ] Système de leveling et d'expérience
-- [ ] Mécanique réelle de capture de Pokémon
-- [ ] Guérison des Pokémon avec les potions
-- [ ] Dialogues et quêtes
-- [ ] Sauvegarde du progrès
-- [ ] Musique et effets sonores
-- [ ] Multiplayer local ou réseau
-
----
-
-## 👨‍💻 Auteur
-
-Développé par Matthieu comme projet d'évaluation ESEO (Cycles Ingénieur, Module Rust)
-
-**Date** : Novembre 2025  
-**Licence** : Voir le fichier `LICENSE`
-
-
-Un jeu Pokémon simplifié développé en Rust, mettant en avant les principes de programmation orientée objet, la gestion des traits et les systèmes graphiques.
-
-### Dépendances principales
-
-- **[Macroquad](https://docs.rs/macroquad/latest/macroquad/)** (v0.4) - Framework graphique 2D
-  - Gestion des textures et rendu des sprites
-  - Gestion des événements clavier
-  - Système de fenêtre et de rendu
-
-- **[Image](https://docs.rs/image/latest/image/)** (v0.25) - Traitement d'images
-  - Chargement et manipulation de fichiers PNG
-  - Redimensionnement des sprites (image::imageops::resize)
-  - Manipulation des pixels RGBA pour la transparence
 
 ## 🏗️ Architecture
 
@@ -323,31 +252,11 @@ pokemon_lite/
 │   ├── graphics.rs             # Fonctions graphiques (UI)
 │   └── lib.rs                  # Exports des modules
 └── texture/
-    ├── pokemon/                # Sprites des Pokémon (32×32px)
+    ├── pokemon/                # Sprites des Pokémon (32×32px), utilisé partiellement dans le code
     ├── dresseur/               # Animations du dresseur (16×24px)
-    └── Game Boy Square.png     # Map de fond (1064×1007px)
+    └── pokemon_lite/texture/Game Boy Advance - Pokemon Mystery Dungeon_ Red Rescue Team - Backgrounds - Pokemon Square.png     # Map de fond (1064×1007px)
 ```
 Un dresseur possède des pokémons dans un Vecteur dynamique et un Pokemon possèdes les différentes méthodes : attaquer, prendre_degats, est_vivant, etc... pour lancer un combat. 
-
-### Concepts clés
-
-#### 1. **Traits Rust**
-- `Pokemon` : Trait implémenté par Flamby, Aquali, Florizarre
-
-#### 2. **Système d'animation**
-- `Direction` enum : Up, Down, Left, Right
-- `AnimationState` enum : Stop, RunningLeft, RunningRight
-- Alternance des frames toutes les 0.5 secondes
-
-#### 3. **Traitement d'images**
-- Suppression automatique des fonds colorés (blanc, bleu)
-- Redimensionnement des sprites pour correspondre à la map
-- Conversion PNG → RgbaImage → Texture2D Macroquad
-
-#### 4. **Système de mouvement**
-- Déplacement fluide pixel par pixel (1 pixel/50ms)
-- Cooldown pour éviter les mouvements trop rapides
-- Vérification des limites de la map
 
 ## 🎮 Contrôles
 
@@ -375,11 +284,18 @@ Utilisé pour :
 ## 📋 Notes de développement
 
 - **Taille TILE_SIZE** : 1 pixel (mouvement granulaire)
-- **Cooldown de mouvement** : 0.05 secondes (50ms)
+- **Cooldown de mouvement** : 0.01 secondes (10ms)
 - **Taille du Pokémon affiché** : 64×64 pixels
 - **Taille du dresseur affiché** : 16×16 pixels
 - **Taille de la map** : 1064×1007 pixels
 
-## 👨‍💻 Auteur : Matthieu Tremblay
 
-Projet développé à titre éducatif pour l'école ESEO dans le cours de Rust.
+
+## Améliorations futures possibles
+
+- [ ] Rencontre de pokémon sauvage sur la carte : déjà en cours mais non implémentable 
+- [ ] Système de leveling et d'expérience
+- [ ] Mécanique réelle de capture de Pokémon
+- [ ] Dialogues et quêtes
+- [ ] Sauvegarde du progrès
+- [ ] Musique et effets sonores
