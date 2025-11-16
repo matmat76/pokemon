@@ -82,6 +82,35 @@ impl CombatState {
         }
     }
 
+    pub fn joueur_utilise_potion(&mut self) -> bool {
+        if let Some(ref mut joueur) = self.pokemon_joueur {
+            let max_pv = joueur.get_pv_max();
+            let pv_actuel = joueur.get_pv();
+            
+            if pv_actuel >= max_pv {
+                self.message_combat = "Votre Pokémon est déjà en pleine santé!".to_string();
+                return false;
+            }
+            
+            // Guérir de 30 PV (ou jusqu'au max)
+            let guerison = 30;
+            let nouveau_pv = (pv_actuel + guerison).min(max_pv);
+            joueur.set_pv(nouveau_pv);
+            
+            self.message_combat = format!(
+                "Vous avez utilisé une Potion!\n{} retrouve {} PV!",
+                joueur.get_nom(),
+                nouveau_pv - pv_actuel
+            );
+            
+            self.combat_timer = 0.0;
+            self.tour_joueur = false;
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn get_resultat(&self) -> String {
         match (&self.pokemon_joueur, &self.pokemon_sauvage) {
             (Some(j), Some(s)) => {
@@ -186,7 +215,7 @@ fn dessiner_bouton(x: f32, y: f32, width: f32, height: f32, label: &str, selecte
     draw_text(label, x + 5.0, y + height / 2.0 + 5.0, 14.0, WHITE);
 }
 
-pub fn traiter_input_combat(combat: &mut CombatState) {
+pub fn traiter_input_combat(combat: &mut CombatState, inventaire_potions: &mut i32) {
     if !combat.tour_joueur {
         return; // C'est au tour du sauvage
     }
@@ -205,9 +234,15 @@ pub fn traiter_input_combat(combat: &mut CombatState) {
     } else if is_key_pressed(KeyCode::Key3) || is_key_pressed(KeyCode::C) {
         println!("Action: Potion!");
         combat.action_selectionnee = ActionCombat::Potion;
-        combat.message_combat = "Vous avez utilisé une Potion!".to_string();
-        combat.combat_timer = 0.0;
-        combat.tour_joueur = false;
+        
+        if *inventaire_potions > 0 {
+            *inventaire_potions -= 1;
+            combat.joueur_utilise_potion();
+            println!("Potions restantes: {}", inventaire_potions);
+        } else {
+            combat.message_combat = "Vous n'avez pas de potion!".to_string();
+            combat.tour_joueur = true;  // Rester au tour du joueur
+        }
     } else if is_key_pressed(KeyCode::Key4) || is_key_pressed(KeyCode::D) {
         println!("Action: Fuir!");
         combat.action_selectionnee = ActionCombat::Fuir;

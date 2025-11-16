@@ -16,6 +16,12 @@ pub trait Pokemon {
 
     // Pour afficher les PV restants
     fn get_pv(&self) -> i32;
+
+    // Pour définir les PV (guérison)
+    fn set_pv(&mut self, pv: i32);
+
+    // Pour obtenir les PV maximum
+    fn get_pv_max(&self) -> i32;
 }
 #[derive(Debug, Clone, Copy)]
 pub enum Type{
@@ -67,6 +73,14 @@ impl Pokemon for Flamby {
     fn get_pv(&self) -> i32 {
         self.vie
     }
+
+    fn set_pv(&mut self, pv: i32) {
+        self.vie = pv;
+    }
+
+    fn get_pv_max(&self) -> i32 {
+        60  // PV max de Flamby
+    }
 }
 
 impl Pokemon for Aquali {
@@ -91,6 +105,14 @@ impl Pokemon for Aquali {
     fn get_pv(&self) -> i32 {
         self.vie
     }
+
+    fn set_pv(&mut self, pv: i32) {
+        self.vie = pv;
+    }
+
+    fn get_pv_max(&self) -> i32 {
+        65  // PV max de Aquali
+    }
 }
 
 impl Pokemon for Florizarre {
@@ -114,6 +136,14 @@ impl Pokemon for Florizarre {
     }
     fn get_pv(&self) -> i32 {
         self.vie
+    }
+
+    fn set_pv(&mut self, pv: i32) {
+        self.vie = pv;
+    }
+
+    fn get_pv_max(&self) -> i32 {
+        70  // PV max de Florizarre
     }
 }
 

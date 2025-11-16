@@ -66,8 +66,8 @@ async fn main() {
 
         // Si on est en combat
         if let Some(ref mut combat) = combat_state {
-            // Gérer les inputs du combat
-            traiter_input_combat(combat);
+            // Gérer les inputs du combat (passer aussi l'inventaire de potions)
+            traiter_input_combat(combat, &mut inventaire_potions);
             
             // Attendre un peu entre les tours
             if combat.combat_timer < 2.0 {
@@ -119,7 +119,7 @@ async fn main() {
 
         // Vérifier les collisions avec les potions
         let collected = potion_manager.collect_potions_at_position(joueur.x, joueur.y);
-        inventaire_potions += collected.len();
+        inventaire_potions += collected.len() as i32;
         if !collected.is_empty() {
             println!("🎒 Inventaire: {} potion(s)", inventaire_potions);
         }
