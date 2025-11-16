@@ -50,6 +50,7 @@ async fn main() {
     let mut _encounter_pokemon_id: Option<u32> = None;
     let mut show_victory_popup = false;
     let mut victory_message = String::new();
+    let mut celebi_defeated = false;
 
     // Inventaire du dresseur
     let mut inventory = Inventory::new();
@@ -85,10 +86,11 @@ async fn main() {
             if combat.est_termine() {
                 println!("Combat terminé: {}", combat.get_resultat());
                 show_victory_popup = true;
+                show_encounter_popup = false;  // Fermer la pop-up d'encounter
+                celebi_defeated = true;  // Marquer Célèbi comme vaincu
                 victory_message = "🎉 Victoire !\nVous avez vaincu Célèbi !\nAppuyez sur Entrée pour quitter.".to_string();
                 combat_state = None;
                 in_battle = false;
-                show_encounter_popup = false;
             }
         } else {
             // On est sur la map, gérer le déplacement normal
@@ -137,14 +139,14 @@ async fn main() {
         // Vérifier la collision avec Célèbi
         let dx_celebi = (celebi_x - joueur.x).abs();
         let dy_celebi = (celebi_y - joueur.y).abs();
-        if dx_celebi < 25 && dy_celebi < 25 && !show_encounter_popup {
+        if dx_celebi < 25 && dy_celebi < 25 && !show_encounter_popup && !celebi_defeated {
             show_encounter_popup = true;
             _encounter_pokemon_id = Some(999); // ID spécial pour Célèbi
             println!("✨ Célèbi détecté! Appuyez sur Entrée pour combattre!");
         }
 
         // Si la pop-up est active et on appuie sur Entrée
-        if show_encounter_popup && is_key_pressed(KeyCode::Enter) {
+        if show_encounter_popup && !show_victory_popup && is_key_pressed(KeyCode::Enter) {
             println!("⚔️  Combat lancé contre Célèbi!");
             show_encounter_popup = false;
             in_battle = true;
