@@ -150,8 +150,10 @@ async fn main() {
             // Créer le Pokémon du joueur
             let pokemon_joueur = Box::new(Flamby::new("Flambino".to_string())) as Box<dyn Pokemon>;
             
-            // Créer le Pokémon ennemi (Célèbi)
-            let pokemon_celebi = Box::new(Flamby::new("Celebi".to_string())) as Box<dyn Pokemon>;
+            // Créer le Pokémon ennemi (Célèbi) avec plus de PV
+            let mut celebi = Flamby::new("Celebi".to_string());
+            celebi.set_pv(120);  // Donner beaucoup plus de PV à Célèbi
+            let pokemon_celebi = Box::new(celebi) as Box<dyn Pokemon>;
             
             // Initialiser le CombatState
             combat_state = Some(CombatState::new(pokemon_joueur, pokemon_celebi));
