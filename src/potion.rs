@@ -18,21 +18,16 @@ impl Potion {
         }
     }
 
-    /// Génère une position aléatoire valide sur la map
-    /// Map : 1064px de largeur, 1007px de hauteur
     pub fn random_position(id: u32) -> Self {
         use rand::Rng;
         let mut rng = rand::thread_rng();
         
-        // Génère une position aléatoire (avec des marges pour pas être trop près des bords)
         let x = rng.gen_range(50..1000);
         let y = rng.gen_range(50..950);
         
         Potion::new(x, y, id)
     }
 
-    /// Vérifie si le joueur (position x, y) touche la potion
-    /// Distance de collision : 20 pixels
     pub fn is_colliding_with_player(&self, player_x: i32, player_y: i32) -> bool {
         let dx = (self.x - player_x).abs();
         let dy = (self.y - player_y).abs();
