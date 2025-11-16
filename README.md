@@ -266,32 +266,6 @@ Un dresseur possède des pokémons dans un Vecteur dynamique et un Pokemon poss�
 | ↑ / ↓ / ← / → | Mouvement du dresseur |
 | E | Quitter le jeu |
 
-## 📦 Dépendances en détail
-
-### Macroquad
-Utilisé pour :
-- Rendu des textures et sprites
-- Détection des entrées clavier
-- Gestion de la fenêtre de jeu
-- Calcul du FPS et du delta time
-
-### Image
-Utilisé pour :
-- `ImageReader::open()` : Charger les fichiers PNG
-- `DynamicImage::to_rgba8()` : Convertir en format RGBA
-- `imageops::resize()` : Redimensionner les sprites
-- Manipulation directe des pixels pour la transparence
-
-## 📋 Notes de développement
-
-- **Taille TILE_SIZE** : 1 pixel (mouvement granulaire)
-- **Cooldown de mouvement** : 0.01 secondes (10ms)
-- **Taille du Pokémon affiché** : 64×64 pixels
-- **Taille du dresseur affiché** : 16×16 pixels
-- **Taille de la map** : 1064×1007 pixels
-
-
-
 ## Améliorations futures possibles
 
 - [ ] Rencontre de pokémon sauvage sur la carte : déjà en cours mais non implémentable 
