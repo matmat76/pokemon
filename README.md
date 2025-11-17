@@ -119,7 +119,7 @@ pub struct CombatState {
 - Tour du joueur → 2 secondes d'attente → Tour du Pokémon ennemi → Cycle
 - Victoire si HP ennemi ≤ 0
 
-**Nouveauté - Gestion d'erreur avec Some()**
+**Nouveauté (1)- Gestion d'erreur avec Some()**
 
 Dans les méthodes de la structure CombatState, j'utilise une première vérification pour savoir si les 2 pokémons sont toujours vivants (Some). Car dans le cas où ils sont morts (None) alors la partie est terminée.
 Pour modifier l'origine de chaque pokémon j'utilise as_ref() comme méthode pour travailler sur mes Vecteur, ce qui me permet de récupérer la référence de l'objet Pokemon concerné lorsqu'un pokémon inflige des dégâts. 'as_ref()' convertit la structure initiale Option<Box<dyn Pokemon>> en &Box<dyn Pokemon> ce qui me permet d'accéder aux références des méthodes de l'instance.
@@ -129,15 +129,45 @@ let sauvage_nom: String = self.pokemon_sauvage.as_ref().unwrap().get_nom().clone
 ```
 Ici ça me permet de récupérer la référence de la variable nom via la méthode get_nom() de l'objet pokemon_sauvage.
 
+**Nouveauté (2)- Rendering graphique avec Macroquad**
+Pour l'interface de combat, j'ai utilisé la librairie Macroquad qui permet de faire des dessins. Elle permet notamment d'accéder aux fonctions : 
+- draw_rectangle qui prend 5 arguments (position intiale x, y, largeur, hauteur, couleur)
+- draw_text(contenu à afficher, position x, position y, taille du texte, couleur)
+- draw_rectangle_lines(...) pour faire les bordures
+
+J'ai utilisé ces 3 fonctions pour faire aussi le dessin des boutons pour les 4 actions : attaquer, pokéball, potion, fuir.
+
 ### 7. **inventory.rs** - Gestion de l'inventaire du joueur
 **Responsabilité** : Stockage et gestion des Pokémon du joueur
 
 **Fonctionnalités** :
 - `add_pokemon()` - Ajoute un Pokémon à l'équipe
 - `get_current_pokemon()` - Retourne le Pokémon actif
-- `switch_to_next()` - Change de Pokémon
 
-**État actuel** : Partiellement intégré (utilisé mais pas complètement fonctionnel dans le combat)
+Ce module doit être améliorer pour faire le lien entre l'inventaire du dresseur et le combat. Car actuellement je simule le combat avec un faux ajout du pokemon Flamby dans l'inventaire du dresseur dès le moment où la rencontre se fait avec Célébi : 
+
+```
+if show_encounter_popup && !show_victory_popup && is_key_pressed(KeyCode::Enter) {
+    show_encounter_popup = false;
+    _in_battle = true;
+    
+    let pokemon_joueur = Box::new(Flamby::new("Flambino".to_string())) as Box<dyn Pokemon>;
+
+    let mut celebi = Flamby::new("Celebi".to_string());
+    celebi.set_pv(120);  // Donner beaucoup plus de PV à Célèbi
+    let pokemon_celebi = Box::new(celebi) as Box<dyn Pokemon>;
+
+    combat_state = Some(CombatState::new(pokemon_joueur, pokemon_celebi));
+}
+```
+Actuellement on peut ajouter des pokémons dans l'inventaire du dresseur, mais seulement manuellement en hardcode et non avec l'apparition de pokémon sauvage. Et on n'a pas le possibilité de récupérer le pokémon de l'inventaire pour l'envoyer au combat.
+
+```
+let mut inventory = Inventory::new();
+inventory.add_pokemon(Box::new(Flamby::new("Flambino".to_string())));
+inventory.add_pokemon(Box::new(Aquali::new("Aquali".to_string())));
+```
+
 
 ### 8. **player.rs** - Gestion du dresseur
 **Responsabilité** : État et mouvement du joueur
@@ -158,7 +188,7 @@ Ici ça me permet de récupérer la référence de la variable nom via la métho
 - `get_frame()` - Retourne la texture correspondant à l'animation actuelle
 - Support de 4 directions × 4 frames chacune
 
-### 10. **sprite_loader.rs** - Chargement et traitement des images : fait par l'IA
+### 11. **sprite_loader.rs** - Chargement et traitement des images
 **Responsabilité** : Utilitaires pour charger et manipuler les sprites PNG
 
 **Fonctionnalités** :
@@ -171,19 +201,14 @@ Ici ça me permet de récupérer la référence de la variable nom via la métho
 **Dépendances** :
 - `image` crate pour le traitement bas niveau des pixels
 
-### 11. **graphics.rs** - Fonctions utilitaires graphiques : fait par l'IA
+### 12. **graphics.rs** - Fonctions utilitaires graphiques
 **Responsabilité** : Rendu UI (texte, boîtes, inventaire)
+
+Dans ce module, j'ai utilisé timer.rs de la librairie macroquad qui permet de récupérer le fps du jeu. J'ai aussi fait l'affichage des caractéristiques du joueur ainsi que des commandes de contrôles.
 
 **Fonctionnalités** :
 - `draw_ui()` - Affiche info joueur (nom, position, tile)
 - Rendu du HUD de jeu
-
-### 12. **dresseur.rs** - Données du dresseur
-**Responsabilité** : Définition du personnage joueur
-
-**Données** :
-- Nom, position (x, y)
-- État animation
 
 ### 13. **lib.rs** - Déclaration des modules
 
@@ -243,23 +268,27 @@ pokemon_lite/
 │   ├── main.rs                 # Boucle de jeu principale
 │   ├── player.rs               # Système de mouvement du joueur
 │   ├── pokemon.rs              # Logique backend des Pokémon (trait + implémentations)
-│   ├── dresseur.rs             # Gestion de l'équipe du dresseur
-│   ├── combat.rs               # Système de combat (en cours de développement)
-│   ├── pokemon_renderer.rs     # Liaison backend/graphique pour les Pokémon
+│   ├── combat.rs               # Système de combat tour par tour
+│   ├── potion.rs               # Gestion des potions
+│   ├── potion_manager.rs       # Génération thread-safe des potions (Arc<Mutex>)
+│   ├── inventory.rs            # Gestion de l'inventaire du joueur
 │   ├── trainer_animations.rs   # Gestion des animations du dresseur
 │   ├── sprite_loader.rs        # Chargement et traitement des sprites
-│   ├── pokedex.rs              # Gestion des sprites Pokémon
 │   ├── graphics.rs             # Fonctions graphiques (UI)
 │   └── lib.rs                  # Exports des modules
 └── texture/
-    ├── pokemon/                # Sprites des Pokémon (32×32px), utilisé partiellement dans le code
+    ├── pokemon/                # Sprites des Pokémon (32×32px)
     ├── dresseur/               # Animations du dresseur (16×24px)
-    └── pokemon_lite/texture/Game Boy Advance - Pokemon Mystery Dungeon_ Red Rescue Team - Backgrounds - Pokemon Square.png     # Map de fond (1064×1007px)
+    └── Game Boy Advance - Pokemon Mystery Dungeon_ Red Rescue Team - Backgrounds - Pokemon Square.png     # Map de fond (1064×1007px)
 ```
-Un dresseur possède des pokémons dans un Vecteur dynamique et un Pokemon possèdes les différentes méthodes : attaquer, prendre_degats, est_vivant, etc... pour lancer un combat. 
+
+---
 
 ## Améliorations futures possibles
 
+- [ ] Actions de fuir et attraper un pokémon en faisant les actions : Fuir et Pokéball
+- [ ] Ajouter le système d'efficacité pour les types de pokémons
+- [ ] Création du rendering des personnages : dresseur, pokéball, potions, pokémons
 - [ ] Rencontre de pokémon sauvage sur la carte : déjà en cours mais non implémentable 
 - [ ] Système de leveling et d'expérience
 - [ ] Mécanique réelle de capture de Pokémon

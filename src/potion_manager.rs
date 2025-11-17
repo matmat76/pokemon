@@ -5,7 +5,8 @@ use std::time::Duration;
 
 pub struct PotionManager {
     pub potions: Arc<Mutex<Vec<Potion>>>,
-    pub potion_counter: Arc<Mutex<u32>>,
+    #[allow(dead_code)]
+    potion_counter: Arc<Mutex<u32>>,
 }
 
 impl PotionManager {

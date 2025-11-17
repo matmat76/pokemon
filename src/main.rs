@@ -32,9 +32,8 @@ async fn main() {
     let celebi_x = 400;
     let celebi_y = 330;
 
-    // État du combat / pop-up
+        // État du combat / pop-up
     let mut show_encounter_popup = false;
-    let mut _encounter_pokemon_id: Option<u32> = None;
     let mut show_victory_popup = false;
     let mut victory_message = String::new();
     let mut celebi_defeated = false;
@@ -46,7 +45,6 @@ async fn main() {
     
     // État du combat (None = pas en combat)
     let mut combat_state: Option<CombatState> = None;
-    let mut _in_battle = false;
 
     // ========== BOUCLE DE JEU PRINCIPALE ==========
     loop {
@@ -113,7 +111,6 @@ async fn main() {
                     }
                     
                     combat_state = None;
-                    _in_battle = false;
                 }
             },
             None => {},
@@ -136,7 +133,6 @@ async fn main() {
         let dy_celebi = (celebi_y - joueur.y).abs();
         if dx_celebi < 25 && dy_celebi < 25 && !show_encounter_popup && !celebi_defeated {
             show_encounter_popup = true;
-            _encounter_pokemon_id = Some(999); // ID spécial pour Célèbi
             println!("✨ Célèbi détecté! Appuyez sur Entrée pour combattre!");
         }
 
@@ -144,7 +140,6 @@ async fn main() {
         if show_encounter_popup && !show_victory_popup && is_key_pressed(KeyCode::Enter) {
             println!("⚔️  Combat lancé contre Célèbi!");
             show_encounter_popup = false;
-            _in_battle = true;
             
             // Créer le Pokémon du joueur
             let pokemon_joueur = Box::new(Flamby::new("Flambino".to_string())) as Box<dyn Pokemon>;

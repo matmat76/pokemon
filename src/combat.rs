@@ -15,7 +15,6 @@ pub struct CombatState {
     pub pokemon_sauvage: Option<Box<dyn Pokemon>>,
     pub action_selectionnee: ActionCombat,
     pub message_combat: String,
-    pub en_combat: bool,
     pub tour_joueur: bool,
     pub combat_timer: f32,
 }
@@ -27,7 +26,6 @@ impl CombatState {
             pokemon_sauvage: Some(pokemon_sauvage),
             action_selectionnee: ActionCombat::Aucune,
             message_combat: "C'est votre tour! Choisissez une action".to_string(),
-            en_combat: true,
             tour_joueur: true,
             combat_timer: 0.0,
         }
@@ -262,6 +260,5 @@ pub fn traiter_input_combat(combat: &mut CombatState, inventaire_potions: &mut i
         println!("Action: Fuir!");
         combat.action_selectionnee = ActionCombat::Fuir;
         combat.message_combat = "Vous tentez de fuir...".to_string();
-        combat.en_combat = false;
     }
 }
