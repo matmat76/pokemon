@@ -2,7 +2,6 @@ use macroquad::prelude::*;
 
 use pokemon_lite::player::Player;
 use pokemon_lite::graphics::draw_ui;
-use pokemon_lite::pokedex::load_pokemon_sprites;
 use pokemon_lite::pokemon::{Pokemon, Flamby, Aquali};
 use pokemon_lite::trainer_animations::TrainerAnimations;
 use pokemon_lite::potion_manager::PotionManager;
@@ -18,14 +17,6 @@ async fn main() {
     let trainer_animations = TrainerAnimations::load()
         .await
         .expect("Erreur: Impossible de charger les animations du dresseur");
-    
-    let pokemon_sprites = load_pokemon_sprites()
-        .expect("Erreur: Impossible de charger les sprites Pokémon");
-
-    let _pokemon_textures: Vec<Texture2D> = pokemon_sprites
-        .iter()
-        .map(|s| s.sprite.to_macroquad_texture())
-        .collect();
     
     // Créer le joueur au démarrage au milieu-gauche de la map
     // Position: x=200 pixels, y=400 pixels
@@ -64,61 +55,69 @@ async fn main() {
             break; // Quitter
         }
 
-        // Si on est en combat
-        if let Some(ref mut combat) = combat_state {
-            // Gérer les inputs du combat (passer aussi l'inventaire de potions)
-            traiter_input_combat(combat, &mut inventaire_potions);
-            
-            // Attendre un peu entre les tours
-            if combat.combat_timer < 2.0 {
-                combat.combat_timer += get_frame_time();
-            } else if !combat.tour_joueur && combat.combat_timer >= 2.0 {
-                // Le sauvage attaque
-                combat.sauvage_attaque();
-                combat.combat_timer = 0.0;
-            }
-            
-            // Vérifier si le combat est terminé
-            if combat.est_termine() {
-                println!("Combat terminé: {}", combat.get_resultat());
-                show_victory_popup = true;
-                show_encounter_popup = false;  // Fermer la pop-up d'encounter
-                
-                // Déterminer le vainqueur
-                let resultat = combat.get_resultat();
-                if resultat.contains("Victoire") {
-                    celebi_defeated = true;  // Marquer Célèbi comme vaincu
-                    victory_message = "🎉 Victoire !\nVous avez vaincu Célèbi !\nAppuyez sur Entrée pour quitter.".to_string();
-                } else {
-                    victory_message = "💀 Défaite !\nVotre Pokémon a été vaincu!\nAppuyez sur Entrée pour quitter.".to_string();
+        // Gestion du mouvement du joueur (seulement si pas en combat)
+        match &combat_state {
+            None => {
+                // On est sur la map, gérer le déplacement normal
+                // Déplacement haut (Flèche haut)
+                if is_key_down(KeyCode::Up) && joueur.can_move() {
+                    joueur.move_up();
                 }
-                
-                combat_state = None;
-                _in_battle = false;
-            }
-        } else {
-            // On est sur la map, gérer le déplacement normal
-            // Déplacement haut (Flèche haut)
-            if is_key_down(KeyCode::Up) && joueur.can_move() {
-                joueur.move_up();
-            }
 
-            // Déplacement bas (Flèche bas)
-            if is_key_down(KeyCode::Down) && joueur.can_move() {
-                joueur.move_down(1007); // Limite de l'image
-            }
+                // Déplacement bas (Flèche bas)
+                if is_key_down(KeyCode::Down) && joueur.can_move() {
+                    joueur.move_down(1007); // Limite de l'image
+                }
 
-            // Déplacement gauche (Flèche gauche)
-            if is_key_down(KeyCode::Left) && joueur.can_move() {
-                joueur.move_left();
-            }
+                // Déplacement gauche (Flèche gauche)
+                if is_key_down(KeyCode::Left) && joueur.can_move() {
+                    joueur.move_left();
+                }
 
-            // Déplacement droite (Flèche droite)
-            if is_key_down(KeyCode::Right) && joueur.can_move() {
-                joueur.move_right(1064); // Limite de l'image
-            }
+                // Déplacement droite (Flèche droite)
+                if is_key_down(KeyCode::Right) && joueur.can_move() {
+                    joueur.move_right(1064); // Limite de l'image
+                }
+            },
+            Some(_) => {},
         }
 
+        // Si on est en combat
+        match &mut combat_state {
+            Some(combat) => {
+                // Gérer les inputs du combat (passer aussi l'inventaire de potions)
+                traiter_input_combat(combat, &mut inventaire_potions);
+                
+                // Attendre un peu entre les tours
+                if combat.combat_timer < 2.0 {
+                    combat.combat_timer += get_frame_time();
+                } else if !combat.tour_joueur && combat.combat_timer >= 2.0 {
+                    // Le sauvage attaque
+                    combat.sauvage_attaque();
+                    combat.combat_timer = 0.0;
+                }
+                
+                // Vérifier si le combat est terminé
+                if combat.est_termine() {
+                    println!("Combat terminé: {}", combat.get_resultat());
+                    show_victory_popup = true;
+                    show_encounter_popup = false;  // Fermer la pop-up d'encounter
+                    
+                    // Déterminer le vainqueur
+                    let resultat = combat.get_resultat();
+                    if resultat.contains("Victoire") {
+                        celebi_defeated = true;  // Marquer Célèbi comme vaincu
+                        victory_message = "🎉 Victoire !\nVous avez vaincu Célèbi !\nAppuyez sur Entrée pour quitter.".to_string();
+                    } else {
+                        victory_message = "💀 Défaite !\nVotre Pokémon a été vaincu!\nAppuyez sur Entrée pour quitter.".to_string();
+                    }
+                    
+                    combat_state = None;
+                    _in_battle = false;
+                }
+            },
+            None => {},
+        }
         // === ÉTAPE 2 : METTRE À JOUR ===
         // Mettre à jour l'animation du dresseur
         let delta_time = get_frame_time();
@@ -191,12 +190,15 @@ async fn main() {
 
         // Afficher le dresseur avec la frame d'animation actuelle
         let frame_name = joueur.get_frame_name();
-        if let Some(texture) = trainer_animations.get_frame(&frame_name) {
-            let params = DrawTextureParams {
-                dest_size: Some(Vec2::new(16.0, 16.0)),
-                ..Default::default()
-            };
-            draw_texture_ex(texture, joueur.x as f32, joueur.y as f32, WHITE, params);
+        match trainer_animations.get_frame(&frame_name) {
+            Some(texture) => {
+                let params = DrawTextureParams {
+                    dest_size: Some(Vec2::new(16.0, 16.0)),
+                    ..Default::default()
+                };
+                draw_texture_ex(texture, joueur.x as f32, joueur.y as f32, WHITE, params);
+            },
+            None => {},
         }
 
         // Dessiner l'UI

@@ -34,44 +34,52 @@ impl CombatState {
     }
 
     pub fn joueur_attaque(&mut self) {
-        if let (Some(joueur), Some(_sauvage)) = (&self.pokemon_joueur, &self.pokemon_sauvage) {
-            let degats = joueur.attaquer();
-            let sauvage_nom = self.pokemon_sauvage.as_ref().unwrap().get_nom().clone();
-            let sauvage_pv = self.pokemon_sauvage.as_ref().unwrap().get_pv() - degats;
-            
-            self.message_combat = format!(
-                "{} attaque! {} points de dégâts!\n{} a {} PV restants",
-                joueur.get_nom(),
-                degats,
-                sauvage_nom,
-                sauvage_pv
-            );
-            if let Some(ref mut poke_sauvage) = self.pokemon_sauvage {
-                poke_sauvage.prendre_degats(degats);
-            }
-            self.combat_timer = 0.0;
-            self.tour_joueur = false;
+        match (&self.pokemon_joueur, &self.pokemon_sauvage) {
+            (Some(joueur), Some(_sauvage)) => {
+                let degats = joueur.attaquer();
+                let sauvage_nom: String = self.pokemon_sauvage.as_ref().unwrap().get_nom().clone();
+                let sauvage_pv = self.pokemon_sauvage.as_ref().unwrap().get_pv() - degats;
+                
+                self.message_combat = format!(
+                    "{} attaque! {} points de dégâts!\n{} a {} PV restants",
+                    joueur.get_nom(),
+                    degats,
+                    sauvage_nom,
+                    sauvage_pv
+                );
+                match &mut self.pokemon_sauvage {
+                    Some(poke_sauvage) => poke_sauvage.prendre_degats(degats),
+                    None => {},
+                }
+                self.combat_timer = 0.0;
+                self.tour_joueur = false;
+            },
+            _ => {},
         }
     }
 
     pub fn sauvage_attaque(&mut self) {
-        if let (Some(_joueur), Some(sauvage)) = (&self.pokemon_joueur, &self.pokemon_sauvage) {
-            let degats = sauvage.attaquer();
-            let joueur_nom = self.pokemon_joueur.as_ref().unwrap().get_nom().clone();
-            let joueur_pv = self.pokemon_joueur.as_ref().unwrap().get_pv() - degats;
-            
-            self.message_combat = format!(
-                "{} sauvage attaque! {} points de dégâts!\n{} a {} PV restants",
-                sauvage.get_nom(),
-                degats,
-                joueur_nom,
-                joueur_pv
-            );
-            if let Some(ref mut poke_joueur) = self.pokemon_joueur {
-                poke_joueur.prendre_degats(degats);
-            }
-            self.combat_timer = 0.0;
-            self.tour_joueur = true;
+        match (&self.pokemon_joueur, &self.pokemon_sauvage) {
+            (Some(_joueur), Some(sauvage)) => {
+                let degats = sauvage.attaquer();
+                let joueur_nom = self.pokemon_joueur.as_ref().unwrap().get_nom().clone();
+                let joueur_pv = self.pokemon_joueur.as_ref().unwrap().get_pv() - degats;
+                
+                self.message_combat = format!(
+                    "{} sauvage attaque! {} points de dégâts!\n{} a {} PV restants",
+                    sauvage.get_nom(),
+                    degats,
+                    joueur_nom,
+                    joueur_pv
+                );
+                match &mut self.pokemon_joueur {
+                    Some(poke_joueur) => poke_joueur.prendre_degats(degats),
+                    None => {},
+                }
+                self.combat_timer = 0.0;
+                self.tour_joueur = true;
+            },
+            _ => {},
         }
     }
 
@@ -83,31 +91,32 @@ impl CombatState {
     }
 
     pub fn joueur_utilise_potion(&mut self) -> bool {
-        if let Some(ref mut joueur) = self.pokemon_joueur {
-            let max_pv = joueur.get_pv_max();
-            let pv_actuel = joueur.get_pv();
-            
-            if pv_actuel >= max_pv {
-                self.message_combat = "Votre Pokémon est déjà en pleine santé!".to_string();
-                return false;
-            }
-            
-            // Guérir de 30 PV (ou jusqu'au max)
-            let guerison = 30;
-            let nouveau_pv = (pv_actuel + guerison).min(max_pv);
-            joueur.set_pv(nouveau_pv);
-            
-            self.message_combat = format!(
-                "Vous avez utilisé une Potion!\n{} retrouve {} PV!",
-                joueur.get_nom(),
-                nouveau_pv - pv_actuel
-            );
-            
-            self.combat_timer = 0.0;
-            self.tour_joueur = false;
-            true
-        } else {
-            false
+        match &mut self.pokemon_joueur {
+            Some(joueur) => {
+                let max_pv = joueur.get_pv_max();
+                let pv_actuel = joueur.get_pv();
+                
+                if pv_actuel >= max_pv {
+                    self.message_combat = "Votre Pokémon est déjà en pleine santé!".to_string();
+                    return false;
+                }
+                
+                // Guérir de 30 PV (ou jusqu'au max)
+                let guerison = 30;
+                let nouveau_pv = (pv_actuel + guerison).min(max_pv);
+                joueur.set_pv(nouveau_pv);
+                
+                self.message_combat = format!(
+                    "Vous avez utilisé une Potion!\n{} retrouve {} PV!",
+                    joueur.get_nom(),
+                    nouveau_pv - pv_actuel
+                );
+                
+                self.combat_timer = 0.0;
+                self.tour_joueur = false;
+                true
+            },
+            None => false,
         }
     }
 
@@ -145,33 +154,39 @@ pub fn dessiner_interface_combat(combat: &CombatState) {
 
     // === AFFICHAGE DES POKÉMON ===
     // Pokémon du joueur (en bas à gauche)
-    if let Some(joueur) = &combat.pokemon_joueur {
-        let joueur_y = y + window_height - 120.0;
-        draw_text(&format!("{}", joueur.get_nom()), x + 20.0, joueur_y, 20.0, WHITE);
-        let pv_text = format!("PV: {}", joueur.get_pv());
-        draw_text(&pv_text, x + 20.0, joueur_y + 25.0, 18.0, YELLOW);
-        
-        // Barre de PV
-        let max_pv = 50.0;
-        let pv_ratio = (joueur.get_pv() as f32) / max_pv;
-        let bar_width = 150.0;
-        draw_rectangle(x + 20.0, joueur_y + 35.0, bar_width, 15.0, DARKGRAY);
-        draw_rectangle(x + 20.0, joueur_y + 35.0, bar_width * pv_ratio, 15.0, GREEN);
+    match &combat.pokemon_joueur {
+        Some(joueur) => {
+            let joueur_y = y + window_height - 120.0;
+            draw_text(&format!("{}", joueur.get_nom()), x + 20.0, joueur_y, 20.0, WHITE);
+            let pv_text = format!("PV: {}", joueur.get_pv());
+            draw_text(&pv_text, x + 20.0, joueur_y + 25.0, 18.0, YELLOW);
+            
+            // Barre de PV
+            let max_pv = 50.0;
+            let pv_ratio = (joueur.get_pv() as f32) / max_pv;
+            let bar_width = 150.0;
+            draw_rectangle(x + 20.0, joueur_y + 35.0, bar_width, 15.0, DARKGRAY);
+            draw_rectangle(x + 20.0, joueur_y + 35.0, bar_width * pv_ratio, 15.0, GREEN);
+        },
+        None => {},
     }
 
     // Pokémon sauvage (en haut à droite)
-    if let Some(sauvage) = &combat.pokemon_sauvage {
-        let sauvage_y = y + 20.0;
-        draw_text(&format!("{} (Sauvage)", sauvage.get_nom()), x + window_width - 250.0, sauvage_y, 20.0, WHITE);
-        let pv_text = format!("PV: {}", sauvage.get_pv());
-        draw_text(&pv_text, x + window_width - 250.0, sauvage_y + 25.0, 18.0, YELLOW);
-        
-        // Barre de PV
-        let max_pv = 50.0;
-        let pv_ratio = (sauvage.get_pv() as f32) / max_pv;
-        let bar_width = 150.0;
-        draw_rectangle(x + window_width - 250.0, sauvage_y + 35.0, bar_width, 15.0, DARKGRAY);
-        draw_rectangle(x + window_width - 250.0, sauvage_y + 35.0, bar_width * pv_ratio, 15.0, GREEN);
+    match &combat.pokemon_sauvage {
+        Some(sauvage) => {
+            let sauvage_y = y + 20.0;
+            draw_text(&format!("{} (Sauvage)", sauvage.get_nom()), x + window_width - 250.0, sauvage_y, 20.0, WHITE);
+            let pv_text = format!("PV: {}", sauvage.get_pv());
+            draw_text(&pv_text, x + window_width - 250.0, sauvage_y + 25.0, 18.0, YELLOW);
+            
+            // Barre de PV
+            let max_pv = 50.0;
+            let pv_ratio = (sauvage.get_pv() as f32) / max_pv;
+            let bar_width = 150.0;
+            draw_rectangle(x + window_width - 250.0, sauvage_y + 35.0, bar_width, 15.0, DARKGRAY);
+            draw_rectangle(x + window_width - 250.0, sauvage_y + 35.0, bar_width * pv_ratio, 15.0, GREEN);
+        },
+        None => {},
     }
 
     // === MESSAGE DE COMBAT ===

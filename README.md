@@ -119,6 +119,16 @@ pub struct CombatState {
 - Tour du joueur → 2 secondes d'attente → Tour du Pokémon ennemi → Cycle
 - Victoire si HP ennemi ≤ 0
 
+**Nouveauté - Gestion d'erreur avec Some()**
+
+Dans les méthodes de la structure CombatState, j'utilise une première vérification pour savoir si les 2 pokémons sont toujours vivants (Some). Car dans le cas où ils sont morts (None) alors la partie est terminée.
+Pour modifier l'origine de chaque pokémon j'utilise as_ref() comme méthode pour travailler sur mes Vecteur, ce qui me permet de récupérer la référence de l'objet Pokemon concerné lorsqu'un pokémon inflige des dégâts. 'as_ref()' convertit la structure initiale Option<Box<dyn Pokemon>> en &Box<dyn Pokemon> ce qui me permet d'accéder aux références des méthodes de l'instance.
+
+```
+let sauvage_nom: String = self.pokemon_sauvage.as_ref().unwrap().get_nom().clone();
+```
+Ici ça me permet de récupérer la référence de la variable nom via la méthode get_nom() de l'objet pokemon_sauvage.
+
 ### 7. **inventory.rs** - Gestion de l'inventaire du joueur
 **Responsabilité** : Stockage et gestion des Pokémon du joueur
 
@@ -208,6 +218,7 @@ pub struct CombatState {
 - Détection et suppression des fonds colorés (bleu Pokémon classique)
 - Extraction de régions d'image (crop de spritesheets)
 
+
 **Utilisé dans** : `sprite_loader.rs`
 
 ### 3. ****[Rand](https://docs.rs/rand/latest/rand/)**** (v0.9)
@@ -216,22 +227,10 @@ pub struct CombatState {
 **Fonctionnalités utilisées** :
 - `rand::random_range()` - Génération d'entiers aléatoires dans une plage
 - Positions aléatoires des potions (50-1000 en X, 50-950 en Y)
-- Positionnement des Pokémon ennemis
-- Dégâts aléatoires en combat (entre min et max)
 
 **Note** : Initialement utilisait des APIs dépréciées (`thread_rng()`, `gen_range()`), maintenant corrigé avec `random_range()` moderne
 
 **Utilisé dans** : `potion.rs`, `pokemon.rs`
-
-
-### Contrôles du jeu
-- **Flèches** : Se déplacer
-- **Entrée** : Interagir avec pop-ups (rencontre, victoire)
-- **Échap** : Annuler une pop-up de rencontre
-- **1/2/3/4** : Actions en combat (attaque, pokéball, potion, fuite)
-- **E** : Quitter le jeu
-Le pokémon légendaire Célébi est affiché en cercle bleu et les potions en cercles rouge sur la map.
-Le combat se fait en tour par tour avec un sleep de 2s entre chaque action. Un chronomètre tourne, donc si aucune action n'est faite au cours des 2s, l'action est considérée comme null.
 
 
 ## 🏗️ Architecture
@@ -258,13 +257,6 @@ pokemon_lite/
     └── pokemon_lite/texture/Game Boy Advance - Pokemon Mystery Dungeon_ Red Rescue Team - Backgrounds - Pokemon Square.png     # Map de fond (1064×1007px)
 ```
 Un dresseur possède des pokémons dans un Vecteur dynamique et un Pokemon possèdes les différentes méthodes : attaquer, prendre_degats, est_vivant, etc... pour lancer un combat. 
-
-## 🎮 Contrôles
-
-| Touche | Action |
-|--------|--------|
-| ↑ / ↓ / ← / → | Mouvement du dresseur |
-| E | Quitter le jeu |
 
 ## Améliorations futures possibles
 
