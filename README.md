@@ -24,6 +24,7 @@ Développé par Matthieu comme projet d'évaluation ESEO (Cycles Ingénieur, Mod
 **Responsabilité** : Orchestration générale du jeu, gestion d'état et boucle graphique
 
 **Fonctionnalités clés** :
+- fait appel à la fonction load() du trainer_animations() qui permet d'afficher les 8 frames différentes du dresseur : gauche, droite, haut, bas et les arrêts. Et fait l'appel à la frame principale et utilise Macroquad pour charger le fond d'écran de l'image PNG "Game Boy... .png"
 - permet le lancement des déplacements du joueur lorsque le combat n'est pas initialisé. 
 - puis affiche la popup de combat lorsque le combat est initialisé.
 - met à jour ensuite les données du dresseur
@@ -41,9 +42,8 @@ Développé par Matthieu comme projet d'évaluation ESEO (Cycles Ingénieur, Mod
 - `Potion { x, y, id, hp_restore }` - Représentation d'une potion sur la carte
 
 **Fonctionnalités** :
-- Génération de potions à positions aléatoires
-- Détection de collision avec le joueur (distance < 20px)
-- Rendu graphique (cercle rouge + anneau jaune)
+- Fonction pour générer une potion (random_position())à des coordonnées aléatoire de la taille de la carte
+- Fonction pour détecter la collision entre la potion(is_colliding_with_player(self, coordonner x, coordonnée y)) et les coordonnées du joueurs : utilisé par potions_managers
 
 
 ### 3. **potion_manager.rs** - Gestion thread-safe des potions
@@ -114,7 +114,7 @@ Pour l'interface de combat, j'ai utilisé la librairie Macroquad qui permet de f
 
 J'ai utilisé ces 3 fonctions pour faire aussi le dessin des boutons pour les 4 actions : attaquer, pokéball, potion, fuir.
 
-### 7. **inventory.rs** - Gestion de l'inventaire du joueur
+### 6. **inventory.rs** - Gestion de l'inventaire du joueur
 **Responsabilité** : Stockage et gestion des Pokémon du joueur
 
 **Fonctionnalités** :
@@ -137,6 +137,9 @@ if show_encounter_popup && !show_victory_popup && is_key_pressed(KeyCode::Enter)
     combat_state = Some(CombatState::new(pokemon_joueur, pokemon_celebi));
 }
 ```
+Ce que montre ce code, c'est le fait que j'ajoute manuellement un Pokemon qui s'appelle Flamby dans l'inventaire du dresseur si le dresseur va au combat avec Célébi et si la touche "Enter" a été appuyé. Je set les PV de Célébi et la variable qui est utilisé dans le main pour détecter s'il y a un combat ou non "combat_state". Je créé une instance avec les deux pokémons qui s'affrontent et lorsqu'on sortira de la condition, le main fera appel à dessiner_interface_combat(un type CombatState) pour afficher la fenêtre de combat.
+
+
 Actuellement on peut ajouter des pokémons dans l'inventaire du dresseur, mais seulement manuellement en hardcode et non avec l'apparition de pokémon sauvage. Et on n'a pas le possibilité de récupérer le pokémon de l'inventaire pour l'envoyer au combat.
 
 ```
@@ -146,7 +149,7 @@ inventory.add_pokemon(Box::new(Aquali::new("Aquali".to_string())));
 ```
 
 
-### 8. **player.rs** - Gestion du dresseur
+### 7. **player.rs** - Gestion du dresseur
 **Responsabilité** : État et mouvement du joueur
 
 **Fonctionnalités** :
@@ -154,28 +157,27 @@ inventory.add_pokemon(Box::new(Aquali::new("Aquali".to_string())));
 - `update_animation()` - Cycle d'animation du sprite (4 frames)
 - `can_move()` - Vérification du cooldown
 
-**Systèmes avancés Rust** :
-- Chronomètre interne pour gestion du cooldown
-- Énumération pour direction d'animation
+J'utilise Macroquad ici aussi pour faire la détection des touches du clavier pour le déplacement du dresseur. J'utilise libs.rs de Macroquad avec la fonction "get_context()" qui renvoie le contexte générale de mon jeu (clavier, souris, écran, son) et je détecte la touche avec la fontion contains() de la librairie Rust.
 
-### 9. **trainer_animations.rs** - Gestion des animations du dresseur
+### 8. **trainer_animations.rs** - Gestion des animations du dresseur
 **Responsabilité** : Charger et gérer les sprites du dresseur
 
 **Fonctionnalités** :
 - `get_frame()` - Retourne la texture correspondant à l'animation actuelle
 - Support de 4 directions × 4 frames chacune
 
-### 10. **graphics.rs** - Fonctions utilitaires graphiques
+Chargement asynchrone qui charge les sprites du dresseur. Comme il y a 12 sprites différentes, cela permet d'actualiser les frames en fonction du mouvement du joueur.
+
+### 9. **graphics.rs** - Fonctions utilitaires graphiques
 **Responsabilité** : Rendu UI (texte, boîtes, inventaire)
 
+Ce module affiche la fenêtre principale du jeu. Il dessine la fenêtre, le texte à l'intérieur 
 Dans ce module, j'ai utilisé timer.rs de la librairie macroquad qui permet de récupérer le fps du jeu. J'ai aussi fait l'affichage des caractéristiques du joueur ainsi que des commandes de contrôles.
 
 **Fonctionnalités** :
-- `draw_ui()` - Affiche info joueur (nom, position, tile)
-- Rendu du HUD de jeu
+- `draw_ui()` - Affiche info joueur (nom, position)
 
-### 11. **lib.rs** - Déclaration des modules
-
+### 10. **lib.rs** - Déclaration des modules
 ---
 
 ## 🔧 Bibliothèques externes
@@ -197,20 +199,8 @@ Dans ce module, j'ai utilisé timer.rs de la librairie macroquad qui permet de r
 
 **Utilisé dans** : `main.rs`, `combat.rs`, `graphics.rs`
 
-### 2. ****[Image](https://docs.rs/image/latest/image/)**** (v0.25)
-**Utilisation** : Traitement et manipulation d'images PNG
 
-**Fonctionnalités utilisées** :
-- `ImageReader::open()` - Chargement de fichiers PNG
-- `DynamicImage::to_rgba8()` - Conversion en format RGBA (4 canaux: R, G, B, Alpha)
-- Manipulation directe des pixels (accès R, G, B, A)
-- Détection et suppression des fonds colorés (bleu Pokémon classique)
-- Extraction de régions d'image (crop de spritesheets)
-
-
-**Utilisé dans** : `sprite_loader.rs`
-
-### 3. ****[Rand](https://docs.rs/rand/latest/rand/)**** (v0.9)
+### 2. ****[Rand](https://docs.rs/rand/latest/rand/)**** (v0.9)
 **Utilisation** : Génération de nombres aléatoires
 
 **Fonctionnalités utilisées** :
@@ -237,7 +227,6 @@ pokemon_lite/
 │   ├── potion_manager.rs       # Génération thread-safe des potions (Arc<Mutex>)
 │   ├── inventory.rs            # Gestion de l'inventaire du joueur
 │   ├── trainer_animations.rs   # Gestion des animations du dresseur
-│   ├── sprite_loader.rs        # Chargement et traitement des sprites
 │   ├── graphics.rs             # Fonctions graphiques (UI)
 │   └── lib.rs                  # Exports des modules
 └── texture/
