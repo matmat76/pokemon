@@ -105,9 +105,9 @@ async fn main() {
                     let resultat = combat.get_resultat();
                     if resultat.contains("Victoire") {
                         celebi_defeated = true;  // Marquer Célèbi comme vaincu
-                        victory_message = "🎉 Victoire !\nVous avez vaincu Célèbi !\nAppuyez sur Entrée pour quitter.".to_string();
+                        victory_message = "Victoire !\nVous avez vaincu Célèbi !\nAppuyez sur Entrée pour quitter.".to_string();
                     } else {
-                        victory_message = "💀 Défaite !\nVotre Pokémon a été vaincu!\nAppuyez sur Entrée pour quitter.".to_string();
+                        victory_message = "Défaite !\nVotre Pokémon a été vaincu!\nAppuyez sur Entrée pour quitter.".to_string();
                     }
                     
                     combat_state = None;
@@ -115,7 +115,6 @@ async fn main() {
             },
             None => {},
         }
-        // === ÉTAPE 2 : METTRE À JOUR ===
         // Mettre à jour l'animation du dresseur
         let delta_time = get_frame_time();
         joueur.update_animation(delta_time);
@@ -125,7 +124,7 @@ async fn main() {
         let collected = potion_manager.collect_potions_at_position(joueur.x, joueur.y);
         inventaire_potions += collected.len() as i32;
         if !collected.is_empty() {
-            println!("🎒 Inventaire: {} potion(s)", inventaire_potions);
+            println!("Inventaire: {} potion(s)", inventaire_potions);
         }
 
         // Vérifier la collision avec Célèbi
@@ -133,12 +132,12 @@ async fn main() {
         let dy_celebi = (celebi_y - joueur.y).abs();
         if dx_celebi < 25 && dy_celebi < 25 && !show_encounter_popup && !celebi_defeated {
             show_encounter_popup = true;
-            println!("✨ Célèbi détecté! Appuyez sur Entrée pour combattre!");
+            println!("Célèbi détecté! Appuyez sur Entrée pour combattre!");
         }
 
         // Si la pop-up est active et on appuie sur Entrée
         if show_encounter_popup && !show_victory_popup && is_key_pressed(KeyCode::Enter) {
-            println!("⚔️  Combat lancé contre Célèbi!");
+            println!("Combat lancé contre Célèbi!");
             show_encounter_popup = false;
             
             // Créer le Pokémon du joueur
@@ -158,7 +157,6 @@ async fn main() {
             show_encounter_popup = false;
         }
 
-        // === ÉTAPE 3 : DESSINER ===
         clear_background(BLACK);
 
         // Si on est en combat, afficher l'interface de combat
@@ -202,7 +200,7 @@ async fn main() {
         
         // Afficher l'inventaire de potions
         draw_text(
-            &format!("🧪 Potions: {}", inventaire_potions),
+            &format!("Potions: {}", inventaire_potions),
             10.0,
             30.0,
             20.0,
@@ -224,7 +222,7 @@ async fn main() {
             draw_rectangle_lines(popup_x, popup_y, popup_width, popup_height, 3.0, YELLOW);
 
             // Texte
-            draw_text("✨ Rencontre avec Célèbi!", popup_x + 50.0, popup_y + 40.0, 20.0, WHITE);
+            draw_text("Rencontre avec Célèbi!", popup_x + 50.0, popup_y + 40.0, 20.0, WHITE);
             draw_text("Appuyez sur ENTRÉE pour combattre", popup_x + 30.0, popup_y + 90.0, 16.0, WHITE);
             draw_text("ou ÉCHAP pour ignorer", popup_x + 60.0, popup_y + 130.0, 16.0, WHITE);
         }
@@ -256,7 +254,6 @@ async fn main() {
         }
         } // Fermer le else de "si on est en combat"
 
-        // === ÉTAPE 4 : AFFICHER ET SYNC FPS ===
         next_frame().await;
     }
 }

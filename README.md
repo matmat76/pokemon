@@ -24,12 +24,11 @@ Développé par Matthieu comme projet d'évaluation ESEO (Cycles Ingénieur, Mod
 **Responsabilité** : Orchestration générale du jeu, gestion d'état et boucle graphique
 
 **Fonctionnalités clés** :
-- Initialisation du contexte macroquad
-- Boucle de jeu (input → update → render)
-- Gestion de la machine d'état (exploration ↔ combat)
-- Gestion des collisions (joueur-potions, joueur-Pokémon, joueur-Célèbi) : réalisé par l'IA
-- Affichage des pop-ups (rencontre, victoire) : réalisé par l'IA 
-- Chargement des textures et ressources
+- permet le lancement des déplacements du joueur lorsque le combat n'est pas initialisé. 
+- puis affiche la popup de combat lorsque le combat est initialisé.
+- met à jour ensuite les données du dresseur
+- vérifies les collisions entre le dresseur et le pokémon Célébie (rond bleu) et avec les potions (ronds rouges)
+- affiche les popups : lancement du combat, map avec caractéristiques du joueur, popup de rencontre, popup de victoire ou défaite
 
 **Dépendances** : 
 - `macroquad` - Gestion graphique et input
@@ -46,55 +45,33 @@ Développé par Matthieu comme projet d'évaluation ESEO (Cycles Ingénieur, Mod
 - Détection de collision avec le joueur (distance < 20px)
 - Rendu graphique (cercle rouge + anneau jaune)
 
-**Thread-safe** : Non, utilisé uniquement en lecture par le thread principal
 
 ### 3. **potion_manager.rs** - Gestion thread-safe des potions
 **Responsabilité** : Gérer l'accès concurrent aux potions via un thread de génération
 
-**Concepts Rust critiques** :
-- **Arc** (Atomic Reference Counting) - Partage de propriété entre threads
-- **Mutex** - Verrouillage exclusif pour accès sécurisé à `Vec<Potion>`
-- **Thread spawning** - Création d'un thread détaché qui s'exécute indéfiniment
 
 **Fonctionnalités** :
-- `new()` - Initialise Arc<Mutex<Vec<Potion>>> et lance le thread de génération
-- `get_potions()` - Acquiert le verrou mutex, clone le vecteur, relâche le verrou
-- `collect_potions_at_position()` - Détecte et supprime les potions en collision
-- `remove_potion()` - Supprime une potion spécifique par ID
-
-**Comportement du thread** :
-```rust
-thread::spawn(move || {
-    loop {
-        thread::sleep(Duration::from_secs(2));  // Génère une potion tous les 2 secondes
-        let mut potions_lock = potions.lock().unwrap();
-        potions_lock.push(/* nouvelle potion */);
-        println!("✨ Nouvelle potion générée...");
-    }
-});
-```
+- Créé une instance de l'objet PotionManager qui contient l'id et la potion pour le main thread.
+- Lance le thread secondaire pour la génération aléatoire de potions.
+- Synchronisation entre le comptage des potions qui sont créé en background et la récupération des ids de ces potions au niveau du main.
+Les deux variables "potions" et "potions_counter" sont protégés par un mutex.
+- appel la gestion de collision pour le moment où le dresseur touche une potion qui popup sur la map pour collecter la potion dans son inventaire.
 
 ### 4. **pokemon.rs** - Traits et implémentations Pokémon
 **Responsabilité** : Définir le comportement commun des Pokémon
 
 **Trait** `Pokemon` :
-- `get_nom()` - Nom du Pokémon
-- `get_hp()` / `set_hp()` - Gestion des points de vie
-- `get_max_hp()` - HP maximum
-- `prendre_degats()` - Application de dégâts
-- `attaquer()` - Calcul de dégâts d'attaque
+Utilisation d'un trait pour la modularité au niveau des pokémons. Cela permettra à l'avenir de pouvoir coder l'efficacité d'attaquer entre les types de pokémons. Actuellement ça permet d'implémenter plusieurs méthodes communes à chaque structure individuel des pokémons.
+- attaquer()
+- est_vivant()
+etc...
 
-**Implémentations** :
-- `Flamby` - Pokémon feu (attaque 45 dégâts, 60 HP max)
-- `Aquali` - Pokémon eau (attaque 42 dégâts, 65 HP max)
+Actuellement, il y a 3 pokémons de créé: Florizarre, Aqualie et Flamby qui sont du type Pokemon
+Chaque objet Pokemon est ajouté dans un vecteur dynamique de type `Box<dyn Pokemon>`
 
-**Traits avancés Rust** :
-- Trait objects (`Box<dyn Pokemon>`) pour polymorphisme
-- Implémentation manuelle de `Clone` (les traits objects ne sont pas clonables par défaut)
-- Gestion de la durée de vie implicite
 
 ### 5. **combat.rs** - Système de combat tour par tour
-**Responsabilité** : Logique et interface du combat - réalisé en partie par l'IA
+**Responsabilité** : Logique et interface du combat
 
 **Structure** `CombatState` :
 ```rust
@@ -188,20 +165,7 @@ inventory.add_pokemon(Box::new(Aquali::new("Aquali".to_string())));
 - `get_frame()` - Retourne la texture correspondant à l'animation actuelle
 - Support de 4 directions × 4 frames chacune
 
-### 11. **sprite_loader.rs** - Chargement et traitement des images
-**Responsabilité** : Utilitaires pour charger et manipuler les sprites PNG
-
-**Fonctionnalités** :
-- `load_image_file()` - Charge une image PNG et la convertit en RgbaImage
-- `crop_sprite()` - Extrait une région rectangulaire d'une image
-- `remove_blue_background()` - Rend transparent le fond bleu Pokémon classique
-- `rgba_to_macroquad_texture()` - Convertit une RgbaImage en texture Macroquad
-- Structure `Sprite` - Wrapper pour stocker et manipuler les sprites
-
-**Dépendances** :
-- `image` crate pour le traitement bas niveau des pixels
-
-### 12. **graphics.rs** - Fonctions utilitaires graphiques
+### 10. **graphics.rs** - Fonctions utilitaires graphiques
 **Responsabilité** : Rendu UI (texte, boîtes, inventaire)
 
 Dans ce module, j'ai utilisé timer.rs de la librairie macroquad qui permet de récupérer le fps du jeu. J'ai aussi fait l'affichage des caractéristiques du joueur ainsi que des commandes de contrôles.
@@ -210,7 +174,7 @@ Dans ce module, j'ai utilisé timer.rs de la librairie macroquad qui permet de r
 - `draw_ui()` - Affiche info joueur (nom, position, tile)
 - Rendu du HUD de jeu
 
-### 13. **lib.rs** - Déclaration des modules
+### 11. **lib.rs** - Déclaration des modules
 
 ---
 
@@ -289,7 +253,7 @@ pokemon_lite/
 - [ ] Actions de fuir et attraper un pokémon en faisant les actions : Fuir et Pokéball
 - [ ] Ajouter le système d'efficacité pour les types de pokémons
 - [ ] Création du rendering des personnages : dresseur, pokéball, potions, pokémons
-- [ ] Rencontre de pokémon sauvage sur la carte : déjà en cours mais non implémentable 
+- [ ] Rencontre de pokémon sauvage sur la carte
 - [ ] Système de leveling et d'expérience
 - [ ] Mécanique réelle de capture de Pokémon
 - [ ] Dialogues et quêtes

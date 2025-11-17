@@ -37,7 +37,6 @@ impl Player {
             movement_cooldown: 0.0,  // Pas de cooldown au démarrage
         }
     }
-    // Source copilot
     // Mettre à jour le timer d'animation (appeler chaque frame avec delta_time)
     pub fn update_animation(&mut self, delta_time: f32) {
         self.animation_timer += delta_time;
@@ -54,7 +53,6 @@ impl Player {
             }
         }
     }
-    // Source : copilot
     // Mettre à jour le cooldown de mouvement
     pub fn update_movement_cooldown(&mut self, delta_time: f32) {
         if self.movement_cooldown > 0.0 {
@@ -66,7 +64,6 @@ impl Player {
     pub fn can_move(&self) -> bool {
         self.movement_cooldown <= 0.0
     }
-    // Source : Copilot
     // Réinitialiser le cooldown après un mouvement
     fn reset_movement_cooldown(&mut self) {
         self.movement_cooldown = 0.01; // 50ms entre chaque mouvement (très rapide)
