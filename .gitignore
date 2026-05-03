@@ -29,3 +29,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Archives
+*.zip
+*.tar.gz
